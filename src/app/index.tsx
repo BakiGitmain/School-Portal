@@ -1,98 +1,476 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import {
+  ActivityIndicator,
+  View,
+} from 'react-native';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+import {
+  Redirect,
+  type Href,
+} from 'expo-router';
+
+import {
+  supabase,
+} from '../lib/supabase';
+
+import {
+  LoginScreen,
+} from '../features/auth/screens/LoginScreen';
+
+type UserRole =
+  | 'admin'
+  | 'teacher'
+  | 'student';
+
+type Profile = {
+  role:
+    UserRole;
+
+  must_change_password:
+    boolean;
+};
+
+/*
+ * =========================================================
+ * ROOT PAGE
+ *
+ * /
+ *
+ * This page decides where the current account should go:
+ *
+ * admin   -> /admin
+ * teacher -> /teacher
+ * student -> /student
+ *
+ * If there is no session, show LoginScreen.
+ * =========================================================
+ */
+
+export default function RootPage() {
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      true,
+    );
+
+  const [
+    hasSession,
+    setHasSession,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    profile,
+    setProfile,
+  ] =
+    useState<
+      Profile |
+      null
+    >(
+      null,
+    );
+
+  /*
+   * =====================================================
+   * LOAD CURRENT ACCOUNT
+   * =====================================================
+   */
+
+  useEffect(
+    () => {
+      let mounted =
+        true;
+
+      /*
+       * ---------------------------------------------
+       * LOAD SESSION + PROFILE
+       * ---------------------------------------------
+       */
+
+      async function loadCurrentAccount() {
+        try {
+          if (
+            mounted
+          ) {
+            setLoading(
+              true,
+            );
+          }
+
+          /*
+           * Get currently active Supabase session.
+           */
+
+          const {
+            data:
+              sessionData,
+            error:
+              sessionError,
+          } =
+            await supabase.auth
+              .getSession();
+
+          if (
+            !mounted
+          ) {
+            return;
+          }
+
+          /*
+           * No active account.
+           */
+
+          if (
+            sessionError ||
+            !sessionData.session
+          ) {
+            setHasSession(
+              false,
+            );
+
+            setProfile(
+              null,
+            );
+
+            return;
+          }
+
+          setHasSession(
+            true,
+          );
+
+          const userId =
+            sessionData
+              .session
+              .user
+              .id;
+
+          /*
+           * Load profile for the account
+           * that is currently active.
+           */
+
+          const {
+            data:
+              profileData,
+            error:
+              profileError,
+          } =
+            await supabase
+              .from(
+                'profiles',
+              )
+              .select(`
+                role,
+                must_change_password
+              `)
+              .eq(
+                'user_id',
+                userId,
+              )
+              .single();
+
+          if (
+            !mounted
+          ) {
+            return;
+          }
+
+          /*
+           * Session exists but profile
+           * could not be loaded.
+           */
+
+          if (
+            profileError ||
+            !profileData
+          ) {
+            console.log(
+              'ROOT PROFILE ERROR:',
+              profileError,
+            );
+
+            setProfile(
+              null,
+            );
+
+            return;
+          }
+
+          const role =
+            profileData.role as
+              UserRole;
+
+          /*
+           * Make sure role is valid.
+           */
+
+          if (
+            role !==
+              'admin' &&
+            role !==
+              'teacher' &&
+            role !==
+              'student'
+          ) {
+            console.log(
+              'INVALID ROLE:',
+              role,
+            );
+
+            setProfile(
+              null,
+            );
+
+            return;
+          }
+
+          setProfile({
+            role,
+
+            must_change_password:
+              Boolean(
+                profileData
+                  .must_change_password,
+              ),
+          });
+        } catch (
+          error
+        ) {
+          console.log(
+            'ROOT LOAD ERROR:',
+            error,
+          );
+
+          if (
+            mounted
+          ) {
+            setHasSession(
+              false,
+            );
+
+            setProfile(
+              null,
+            );
+          }
+        } finally {
+          if (
+            mounted
+          ) {
+            setLoading(
+              false,
+            );
+          }
+        }
+      }
+
+      /*
+       * Initial load.
+       */
+
+      void loadCurrentAccount();
+
+      /*
+       * =================================================
+       * AUTH LISTENER
+       *
+       * Important when switching:
+       *
+       * President -> Student
+       * Teacher   -> Student
+       * Student   -> President
+       * =================================================
+       */
+
+      const {
+        data:
+          authListener,
+      } =
+        supabase.auth
+          .onAuthStateChange(
+            (
+              event,
+            ) => {
+              console.log(
+                'ROOT AUTH EVENT:',
+                event,
+              );
+
+              void loadCurrentAccount();
+            },
+          );
+
+      /*
+       * Cleanup.
+       */
+
+      return () => {
+        mounted =
+          false;
+
+        authListener
+          .subscription
+          .unsubscribe();
+      };
+    },
+    [],
+  );
+
+  /*
+   * =====================================================
+   * LOADING
+   * =====================================================
+   */
+
+  if (
+    loading
+  ) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <LoadingScreen />
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  /*
+   * =====================================================
+   * NOT LOGGED IN
+   * =====================================================
+   */
+
+  if (
+    !hasSession
+  ) {
+    return (
+      <LoginScreen />
+    );
+  }
+
+  /*
+   * =====================================================
+   * SESSION EXISTS BUT PROFILE NOT READY
+   * =====================================================
+   */
+
+  if (
+    !profile
+  ) {
+    return (
+      <LoadingScreen />
+    );
+  }
+
+  /*
+   * =====================================================
+   * MUST CHANGE PASSWORD
+   * =====================================================
+   */
+
+  if (
+    profile.must_change_password
+  ) {
+    return (
+      <Redirect
+        href={
+          '/change-password' as Href
+        }
+      />
+    );
+  }
+
+  /*
+   * =====================================================
+   * PRESIDENT
+   * =====================================================
+   */
+
+  if (
+    profile.role ===
+    'admin'
+  ) {
+    return (
+      <Redirect
+        href={
+          '/admin' as Href
+        }
+      />
+    );
+  }
+
+  /*
+   * =====================================================
+   * TEACHER
+   * =====================================================
+   */
+
+  if (
+    profile.role ===
+    'teacher'
+  ) {
+    return (
+      <Redirect
+        href={
+          '/teacher' as Href
+        }
+      />
+    );
+  }
+
+  /*
+   * =====================================================
+   * STUDENT
+   * =====================================================
+   *
+   * Your folder now exists at:
+   *
+   * src/app/student/index.tsx
+   *
+   * So this is the correct route.
+   * =====================================================
+   */
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Redirect
+      href={
+        '/student' as Href
+      }
+    />
   );
 }
 
-export default function HomeScreen() {
+/*
+ * =========================================================
+ * LOADING SCREEN
+ * =========================================================
+ */
+
+function LoadingScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View
+      style={{
+        flex:
+          1,
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        alignItems:
+          'center',
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        justifyContent:
+          'center',
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        backgroundColor:
+          '#F7FAFE',
+      }}
+    >
+      <ActivityIndicator
+        size="large"
+        color="#1671F5"
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
