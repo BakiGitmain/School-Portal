@@ -1,11 +1,7 @@
-import { PlaceholderScreen } from "../../components/common/PlaceholderScreen";
+// src/app/student/profile.tsx
 
-export default function Profile() {
-  return (
-    <PlaceholderScreen
-      title="Profile"
-      description="View your student information and account."
-      icon="person-outline"
-    />
-  );
+import StudentProfileScreen from '../../features/student/screens/StudentProfileScreen';
+
+export default function StudentProfile() {
+  return <StudentProfileScreen />;
 }

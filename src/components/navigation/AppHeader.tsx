@@ -9,8 +9,10 @@ import {
   Image,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -40,7 +42,6 @@ import {
   getSavedAccounts,
   getSavedSession,
   removeSavedAccount,
-  saveAccount,
   type SavedAccount,
 } from '../../lib/accountStore';
 
@@ -57,37 +58,35 @@ import type {
   UserRole,
 } from '../../constants/roleNavigation';
 
+/* =========================================================
+ * TYPES
+ * ======================================================= */
+
 type Props = {
-  role:
-    UserRole;
+  role: UserRole;
 };
 
-/*
- * =========================================================
+/* =========================================================
  * ROLE NAMES
- * =========================================================
- */
+ * ======================================================= */
 
-const ROLE_NAMES:
-  Record<
-    UserRole,
-    string
-  > = {
-  admin:
-    'President',
-
-  teacher:
-    'Teacher',
-
-  student:
-    'Student',
+const ROLE_NAMES: Record<
+  UserRole,
+  string
+> = {
+  admin: 'President',
+  teacher: 'Teacher',
+  student: 'Student',
 };
 
-const HOME_TITLES:
-  Record<
-    UserRole,
-    string
-  > = {
+/* =========================================================
+ * HOME TITLES
+ * ======================================================= */
+
+const HOME_TITLES: Record<
+  UserRole,
+  string
+> = {
   admin:
     'President Dashboard',
 
@@ -98,11 +97,14 @@ const HOME_TITLES:
     'Student Dashboard',
 };
 
-const PAGE_TITLES:
-  Record<
-    string,
-    string
-  > = {
+/* =========================================================
+ * PAGE TITLES
+ * ======================================================= */
+
+const PAGE_TITLES: Record<
+  string,
+  string
+> = {
   teachers:
     'Teachers',
 
@@ -127,6 +129,12 @@ const PAGE_TITLES:
   more:
     'More',
 
+  calendar:
+    'School Calendar',
+
+  behavior:
+    'Behavior',
+
   profile:
     'Profile',
 
@@ -134,96 +142,27 @@ const PAGE_TITLES:
     'Settings',
 };
 
-/*
- * =========================================================
+/* =========================================================
  * PAGE TITLE
- * =========================================================
- */
+ * ======================================================= */
 
 function getPageTitle(
-  pathname:
-    string,
-
-  role:
-    UserRole,
+  pathname: string,
+  role: UserRole,
 ) {
-  /*
-   * President detail pages.
-   */
-
-  if (
-    role ===
-    'admin'
-  ) {
-    if (
-      pathname ===
-        '/admin/student' ||
-      pathname.startsWith(
-        '/admin/student/',
-      )
-    ) {
-      return 'Student Details';
-    }
-
-    if (
-      pathname ===
-        '/admin/class' ||
-      pathname.startsWith(
-        '/admin/class/',
-      )
-    ) {
-      return 'Class Details';
-    }
-
-    if (
-      pathname ===
-        '/admin/teacher' ||
-      pathname.startsWith(
-        '/admin/teacher/',
-      )
-    ) {
-      return 'Teacher Details';
-    }
-  }
-
-  /*
-   * Teacher student details.
-   */
-
-  if (
-    role ===
-    'teacher'
-  ) {
-    if (
-      pathname ===
-        '/teacher/student' ||
-      pathname.startsWith(
-        '/teacher/student/',
-      )
-    ) {
-      return 'Student Details';
-    }
-  }
-
   const parts =
     pathname
-      .split(
-        '/',
-      )
-      .filter(
-        Boolean,
-      );
+      .split('/')
+      .filter(Boolean);
 
   const last =
     parts[
-      parts.length -
-        1
+      parts.length - 1
     ];
 
   if (
     !last ||
-    last ===
-      role
+    last === role
   ) {
     return HOME_TITLES[
       role
@@ -240,38 +179,39 @@ function getPageTitle(
   );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * ROLE ROUTE
- * =========================================================
- */
+ * ======================================================= */
 
 function getRoleRoute(
-  role:
-    UserRole,
+  role: UserRole,
 ): Href {
   if (
     role ===
     'admin'
   ) {
-    return '/admin' as Href;
+    return (
+      '/admin' as Href
+    );
   }
 
   if (
     role ===
     'teacher'
   ) {
-    return '/teacher' as Href;
+    return (
+      '/teacher' as Href
+    );
   }
 
-  return '/student' as Href;
+  return (
+    '/student' as Href
+  );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * HEADER
- * =========================================================
- */
+ * ======================================================= */
 
 export default function AppHeader({
   role,
@@ -284,6 +224,12 @@ export default function AppHeader({
 
   const insets =
     useSafeAreaInsets();
+
+  const {
+    height:
+      windowHeight,
+  } =
+    useWindowDimensions();
 
   const {
     colors,
@@ -312,9 +258,7 @@ export default function AppHeader({
     menuOpen,
     setMenuOpen,
   ] =
-    useState(
-      false,
-    );
+    useState(false);
 
   const [
     accounts,
@@ -329,19 +273,14 @@ export default function AppHeader({
     setSwitchingId,
   ] =
     useState<
-      string |
-      null
-    >(
-      null,
-    );
+      string | null
+    >(null);
 
   const [
     loggingOut,
     setLoggingOut,
   ] =
-    useState(
-      false,
-    );
+    useState(false);
 
   const [
     accountError,
@@ -349,11 +288,9 @@ export default function AppHeader({
   ] =
     useState('');
 
-  /*
-   * =====================================================
-   * PAGE NAME
-   * =====================================================
-   */
+  /* =====================================================
+   * PAGE TITLE
+   * =================================================== */
 
   const pageTitle =
     useMemo(
@@ -368,9 +305,12 @@ export default function AppHeader({
       ],
     );
 
+  /* =====================================================
+   * DISPLAY NAME
+   * =================================================== */
+
   const displayName =
-    profile
-      ?.full_name ??
+    profile?.full_name ??
     ROLE_NAMES[
       role
     ];
@@ -378,17 +318,35 @@ export default function AppHeader({
   const initial =
     displayName
       .trim()
-      .charAt(
-        0,
-      )
+      .charAt(0)
       .toUpperCase() ||
     'U';
 
-  /*
-   * =====================================================
-   * SAVED ACCOUNTS
-   * =====================================================
-   */
+  /* =====================================================
+   * MENU HEIGHT
+   * =================================================== */
+
+  const menuTop =
+    insets.top +
+    66;
+
+  const availableHeight =
+    Math.max(
+      300,
+      windowHeight -
+        menuTop -
+        18,
+    );
+
+  const menuMaxHeight =
+    Math.min(
+      560,
+      availableHeight,
+    );
+
+  /* =====================================================
+   * LOAD ACCOUNTS WHEN MENU OPENS
+   * =================================================== */
 
   useEffect(
     () => {
@@ -402,38 +360,22 @@ export default function AppHeader({
     },
     [
       menuOpen,
-      profile
-        ?.user_id,
+      profile?.user_id,
     ],
   );
 
   async function loadAccounts() {
-    try {
-      const saved =
-        await getSavedAccounts();
+    const saved =
+      await getSavedAccounts();
 
-      setAccounts(
-        saved,
-      );
-    } catch (
-      error
-    ) {
-      console.log(
-        'LOAD ACCOUNTS ERROR:',
-        error,
-      );
-
-      setAccountError(
-        'Saved accounts could not be loaded.',
-      );
-    }
+    setAccounts(
+      saved,
+    );
   }
 
-  /*
-   * =====================================================
-   * CLOSE
-   * =====================================================
-   */
+  /* =====================================================
+   * CLOSE MENU
+   * =================================================== */
 
   function closeMenu() {
     setMenuOpen(
@@ -445,39 +387,39 @@ export default function AppHeader({
     );
   }
 
-  /*
-   * =====================================================
+  /* =====================================================
    * PROFILE
-   * =====================================================
-   */
+   * =================================================== */
 
   function goToProfile() {
     closeMenu();
 
+    const route =
+      `/${role}/profile` as Href;
+
     router.push(
-      `/${role}/profile` as Href,
+      route,
     );
   }
 
-  /*
-   * =====================================================
+  /* =====================================================
    * SETTINGS
-   * =====================================================
-   */
+   * =================================================== */
 
   function goToSettings() {
     closeMenu();
 
+    const route =
+      `/${role}/settings` as Href;
+
     router.push(
-      `/${role}/settings` as Href,
+      route,
     );
   }
 
-  /*
-   * =====================================================
+  /* =====================================================
    * ADD ACCOUNT
-   * =====================================================
-   */
+   * =================================================== */
 
   function addAccount() {
     closeMenu();
@@ -487,70 +429,9 @@ export default function AppHeader({
     );
   }
 
-  /*
-   * =====================================================
-   * REFRESH CURRENT SAVED SESSION
-   *
-   * Supabase can rotate a refresh token.
-   *
-   * Before leaving an account, save its newest token
-   * so switching back does not use an old token.
-   * =====================================================
-   */
-
-  async function saveCurrentFreshSession() {
-    if (
-      !profile
-    ) {
-      return;
-    }
-
-    const currentAccount =
-      accounts.find(
-        (
-          account,
-        ) =>
-          account.userId ===
-          profile.user_id,
-      );
-
-    if (
-      !currentAccount
-    ) {
-      return;
-    }
-
-    const {
-      data,
-    } =
-      await supabase.auth
-        .getSession();
-
-    if (
-      !data.session
-    ) {
-      return;
-    }
-
-    if (
-      data.session
-        .user.id !==
-      profile.user_id
-    ) {
-      return;
-    }
-
-    await saveAccount(
-      currentAccount,
-      data.session,
-    );
-  }
-
-  /*
-   * =====================================================
+  /* =====================================================
    * SWITCH ACCOUNT
-   * =====================================================
-   */
+   * =================================================== */
 
   async function switchAccount(
     account:
@@ -558,7 +439,6 @@ export default function AppHeader({
   ) {
     if (
       switchingId ||
-      loggingOut ||
       account.userId ===
         profile?.user_id
     ) {
@@ -574,24 +454,13 @@ export default function AppHeader({
         account.userId,
       );
 
-      /*
-       * Save latest tokens of
-       * the account we are leaving.
-       */
-
-      await saveCurrentFreshSession();
-
-      /*
-       * Load target account session.
-       */
-
-      const savedSession =
+      const session =
         await getSavedSession(
           account.userId,
         );
 
       if (
-        !savedSession
+        !session
       ) {
         await removeSavedAccount(
           account.userId,
@@ -606,35 +475,22 @@ export default function AppHeader({
         return;
       }
 
-      /*
-       * Switch Supabase authentication.
-       */
-
       const {
-        data:
-          sessionData,
-
         error:
           sessionError,
       } =
         await supabase.auth
           .setSession({
             access_token:
-              savedSession.accessToken,
+              session.accessToken,
 
             refresh_token:
-              savedSession.refreshToken,
+              session.refreshToken,
           });
 
       if (
-        sessionError ||
-        !sessionData.session
+        sessionError
       ) {
-        console.log(
-          'SWITCH SESSION ERROR:',
-          sessionError,
-        );
-
         await removeSavedAccount(
           account.userId,
         );
@@ -642,43 +498,11 @@ export default function AppHeader({
         await loadAccounts();
 
         setAccountError(
-          'This saved session expired. Sign in again.',
+          'Sign in again.',
         );
 
         return;
       }
-
-      /*
-       * Critical safety check.
-       */
-
-      if (
-        sessionData
-          .session
-          .user.id !==
-        account.userId
-      ) {
-        throw new Error(
-          'The saved session belongs to a different account.',
-        );
-      }
-
-      /*
-       * Save refreshed session.
-       *
-       * If Supabase rotated the token,
-       * this prevents future switching errors.
-       */
-
-      await saveAccount(
-        account,
-        sessionData.session,
-      );
-
-      /*
-       * Load profile using the ACTUAL
-       * authenticated user.
-       */
 
       const {
         data:
@@ -692,15 +516,12 @@ export default function AppHeader({
             'profiles',
           )
           .select(`
-            user_id,
             role,
             must_change_password
           `)
           .eq(
             'user_id',
-            sessionData
-              .session
-              .user.id,
+            account.userId,
           )
           .single();
 
@@ -708,40 +529,14 @@ export default function AppHeader({
         profileError ||
         !newProfile
       ) {
-        console.log(
-          'SWITCH PROFILE ERROR:',
-          profileError,
-        );
-
         setAccountError(
-          'Could not load this account.',
+          'Could not switch account.',
         );
 
         return;
       }
 
-      const newRole =
-        newProfile.role as
-          UserRole;
-
-      if (
-        newRole !==
-          'admin' &&
-        newRole !==
-          'teacher' &&
-        newRole !==
-          'student'
-      ) {
-        throw new Error(
-          'This account has an invalid role.',
-        );
-      }
-
       closeMenu();
-
-      /*
-       * Temporary-password account.
-       */
 
       if (
         newProfile
@@ -754,13 +549,10 @@ export default function AppHeader({
         return;
       }
 
-      /*
-       * Navigate to actual role.
-       */
-
       router.replace(
         getRoleRoute(
-          newRole,
+          newProfile.role as
+            UserRole,
         ),
       );
     } catch (
@@ -772,10 +564,7 @@ export default function AppHeader({
       );
 
       setAccountError(
-        error instanceof
-        Error
-          ? error.message
-          : 'Could not switch account.',
+        'Could not switch account.',
       );
     } finally {
       setSwitchingId(
@@ -784,16 +573,13 @@ export default function AppHeader({
     }
   }
 
-  /*
-   * =====================================================
+  /* =====================================================
    * LOGOUT
-   * =====================================================
-   */
+   * =================================================== */
 
   async function logout() {
     if (
       loggingOut ||
-      switchingId ||
       !profile
     ) {
       return;
@@ -807,10 +593,6 @@ export default function AppHeader({
       const currentId =
         profile.user_id;
 
-      /*
-       * Remove current account locally.
-       */
-
       await removeSavedAccount(
         currentId,
       );
@@ -818,19 +600,19 @@ export default function AppHeader({
       const remaining =
         await getSavedAccounts();
 
+      await supabase.auth
+        .signOut();
+
+      closeMenu();
+
       /*
-       * No other account.
+       * No accounts left.
        */
 
       if (
         remaining.length ===
         0
       ) {
-        await supabase.auth
-          .signOut();
-
-        closeMenu();
-
         router.replace(
           '/' as Href,
         );
@@ -839,90 +621,54 @@ export default function AppHeader({
       }
 
       /*
-       * Switch straight to another saved account.
-       *
-       * We intentionally do not create an
-       * unauthenticated gap here.
+       * Automatically switch
+       * to the next saved account.
        */
 
-      for (
-        const next of
-        remaining
-      ) {
-        const session =
-          await getSavedSession(
-            next.userId,
-          );
+      const next =
+        remaining[0];
 
-        if (
-          !session
-        ) {
-          continue;
-        }
-
-        const {
-          data:
-            sessionData,
-
-          error:
-            sessionError,
-        } =
-          await supabase.auth
-            .setSession({
-              access_token:
-                session.accessToken,
-
-              refresh_token:
-                session.refreshToken,
-            });
-
-        if (
-          sessionError ||
-          !sessionData.session
-        ) {
-          continue;
-        }
-
-        if (
-          sessionData
-            .session
-            .user.id !==
-          next.userId
-        ) {
-          continue;
-        }
-
-        /*
-         * Keep newly rotated token.
-         */
-
-        await saveAccount(
-          next,
-          sessionData.session,
+      const session =
+        await getSavedSession(
+          next.userId,
         );
 
-        closeMenu();
-
+      if (
+        !session
+      ) {
         router.replace(
-          getRoleRoute(
-            next.role,
-          ),
+          '/' as Href,
         );
 
         return;
       }
 
-      /*
-       * No remaining saved session worked.
-       */
+      const {
+        error,
+      } =
+        await supabase.auth
+          .setSession({
+            access_token:
+              session.accessToken,
 
-      await supabase.auth
-        .signOut();
+            refresh_token:
+              session.refreshToken,
+          });
 
-      closeMenu();
+      if (
+        error
+      ) {
+        router.replace(
+          '/' as Href,
+        );
+
+        return;
+      }
 
       router.replace(
-        '/' as Href,
+        getRoleRoute(
+          next.role,
+        ),
       );
     } catch (
       error
@@ -932,8 +678,8 @@ export default function AppHeader({
         error,
       );
 
-      setAccountError(
-        'Could not sign out.',
+      router.replace(
+        '/' as Href,
       );
     } finally {
       setLoggingOut(
@@ -942,26 +688,20 @@ export default function AppHeader({
     }
   }
 
-  /*
-   * =====================================================
+  /* =====================================================
    * OTHER ACCOUNTS
-   * =====================================================
-   */
+   * =================================================== */
 
   const otherAccounts =
     accounts.filter(
-      (
-        account,
-      ) =>
+      account =>
         account.userId !==
         profile?.user_id,
     );
 
-  /*
-   * =====================================================
+  /* =====================================================
    * UI
-   * =====================================================
-   */
+   * =================================================== */
 
   return (
     <>
@@ -974,7 +714,9 @@ export default function AppHeader({
         }
       />
 
+      {/* ================================================= */}
       {/* HEADER */}
+      {/* ================================================= */}
 
       <View
         style={[
@@ -996,9 +738,7 @@ export default function AppHeader({
             style={
               styles.pageTitle
             }
-            numberOfLines={
-              1
-            }
+            numberOfLines={1}
           >
             {
               pageTitle
@@ -1017,6 +757,8 @@ export default function AppHeader({
             }
           </Text>
         </View>
+
+        {/* ACCOUNT BUTTON */}
 
         <Pressable
           onPress={() =>
@@ -1071,9 +813,7 @@ export default function AppHeader({
 
           <Ionicons
             name="chevron-down"
-            size={
-              16
-            }
+            size={16}
             color={
               colors.textMuted
             }
@@ -1081,7 +821,9 @@ export default function AppHeader({
         </Pressable>
       </View>
 
+      {/* ================================================= */}
       {/* ACCOUNT MENU */}
+      {/* ================================================= */}
 
       <Modal
         visible={
@@ -1108,18 +850,20 @@ export default function AppHeader({
 
               {
                 top:
-                  insets.top +
-                  66,
+                  menuTop,
+
+                maxHeight:
+                  menuMaxHeight,
               },
             ]}
-            onPress={(
-              event,
-            ) =>
-              event
-                .stopPropagation()
+            onPress={
+              event =>
+                event.stopPropagation()
             }
           >
-            {/* CURRENT ACCOUNT */}
+            {/* ============================================= */}
+            {/* CURRENT ACCOUNT - FIXED */}
+            {/* ============================================= */}
 
             <View
               style={
@@ -1152,9 +896,7 @@ export default function AppHeader({
                   style={
                     styles.accountName
                   }
-                  numberOfLines={
-                    1
-                  }
+                  numberOfLines={1}
                 >
                   {
                     displayName
@@ -1165,6 +907,7 @@ export default function AppHeader({
                   style={
                     styles.accountId
                   }
+                  numberOfLines={1}
                 >
                   {profile
                     ?.teacher_id ??
@@ -1178,16 +921,16 @@ export default function AppHeader({
 
               <Ionicons
                 name="checkmark-circle"
-                size={
-                  20
-                }
+                size={20}
                 color={
                   colors.primary
                 }
               />
             </View>
 
-            {/* OTHER ACCOUNTS */}
+            {/* ============================================= */}
+            {/* OTHER ACCOUNTS - ONLY THIS AREA SCROLLS */}
+            {/* ============================================= */}
 
             {otherAccounts.length >
             0 ? (
@@ -1198,112 +941,115 @@ export default function AppHeader({
                   }
                 />
 
-                {otherAccounts.map(
-                  (
-                    account,
-                  ) => (
-                    <Pressable
-                      key={
-                        account.userId
-                      }
-                      disabled={
-                        Boolean(
-                          switchingId,
-                        ) ||
-                        loggingOut
-                      }
-                      onPress={() =>
-                        void switchAccount(
-                          account,
-                        )
-                      }
-                      style={({
-                        pressed,
-                      }) => [
-                        styles.savedAccount,
+                <ScrollView
+                  style={
+                    styles.accountsViewport
+                  }
+                  contentContainerStyle={
+                    styles.accountsContent
+                  }
+                  showsVerticalScrollIndicator={
+                    false
+                  }
+                  nestedScrollEnabled
+                >
+                  {otherAccounts.map(
+                    account => (
+                      <Pressable
+                        key={
+                          account.userId
+                        }
+                        onPress={() =>
+                          void switchAccount(
+                            account,
+                          )
+                        }
+                        disabled={
+                          Boolean(
+                            switchingId,
+                          )
+                        }
+                        style={({
+                          pressed,
+                        }) => [
+                          styles.savedAccount,
 
-                        pressed &&
-                          styles.itemPressed,
-                      ]}
-                    >
-                      <AccountAvatar
-                        name={
-                          account.fullName
-                        }
-                        avatarUrl={
-                          account.avatarUrl
-                        }
-                        colors={
-                          colors
-                        }
-                        styles={
-                          styles
-                        }
-                      />
-
-                      <View
-                        style={
-                          styles.accountText
-                        }
+                          pressed &&
+                            styles.itemPressed,
+                        ]}
                       >
-                        <Text
-                          style={
-                            styles.accountName
-                          }
-                          numberOfLines={
-                            1
-                          }
-                        >
-                          {
+                        <AccountAvatar
+                          name={
                             account.fullName
                           }
-                        </Text>
+                          avatarUrl={
+                            account.avatarUrl
+                          }
+                          colors={
+                            colors
+                          }
+                          styles={
+                            styles
+                          }
+                        />
 
-                        <Text
+                        <View
                           style={
-                            styles.accountId
+                            styles.accountText
                           }
                         >
-                          {
-                            account.loginId
-                          }
-                        </Text>
-                      </View>
+                          <Text
+                            style={
+                              styles.accountName
+                            }
+                            numberOfLines={1}
+                          >
+                            {
+                              account.fullName
+                            }
+                          </Text>
 
-                      {switchingId ===
-                      account.userId ? (
-                        <ActivityIndicator
-                          size="small"
-                          color={
-                            colors.primary
-                          }
-                        />
-                      ) : (
-                        <Ionicons
-                          name="chevron-forward"
-                          size={
-                            16
-                          }
-                          color={
-                            colors.textMuted
-                          }
-                        />
-                      )}
-                    </Pressable>
-                  ),
-                )}
+                          <Text
+                            style={
+                              styles.accountId
+                            }
+                            numberOfLines={1}
+                          >
+                            {
+                              account.loginId
+                            }
+                          </Text>
+                        </View>
+
+                        {switchingId ===
+                        account.userId ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={
+                              colors.primary
+                            }
+                          />
+                        ) : (
+                          <Ionicons
+                            name="chevron-forward"
+                            size={16}
+                            color={
+                              colors.textMuted
+                            }
+                          />
+                        )}
+                      </Pressable>
+                    ),
+                  )}
+                </ScrollView>
               </>
             ) : null}
 
+            {/* ============================================= */}
             {/* ADD ACCOUNT */}
+            {/* ============================================= */}
 
             <Pressable
-              disabled={
-                Boolean(
-                  switchingId,
-                ) ||
-                loggingOut
-              }
               onPress={
                 addAccount
               }
@@ -1323,9 +1069,7 @@ export default function AppHeader({
               >
                 <Ionicons
                   name="add"
-                  size={
-                    21
-                  }
+                  size={21}
                   color={
                     colors.primary
                   }
@@ -1341,8 +1085,6 @@ export default function AppHeader({
               </Text>
             </Pressable>
 
-            {/* ERROR */}
-
             {accountError ? (
               <Text
                 style={
@@ -1354,6 +1096,10 @@ export default function AppHeader({
                 }
               </Text>
             ) : null}
+
+            {/* ============================================= */}
+            {/* ACTIONS */}
+            {/* ============================================= */}
 
             <Divider
               styles={
@@ -1419,22 +1165,18 @@ export default function AppHeader({
   );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * SHARED STYLE TYPE
- * =========================================================
- */
+ * ======================================================= */
 
 type SharedStyles =
   ReturnType<
     typeof createStyles
   >;
 
-/*
- * =========================================================
+/* =========================================================
  * ACCOUNT AVATAR
- * =========================================================
- */
+ * ======================================================= */
 
 function AccountAvatar({
   name,
@@ -1446,8 +1188,7 @@ function AccountAvatar({
     string;
 
   avatarUrl:
-    | string
-    | null;
+    string | null;
 
   colors:
     AppThemeColors;
@@ -1458,9 +1199,7 @@ function AccountAvatar({
   const initial =
     name
       .trim()
-      .charAt(
-        0,
-      )
+      .charAt(0)
       .toUpperCase() ||
     'U';
 
@@ -1495,11 +1234,9 @@ function AccountAvatar({
   );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * DIVIDER
- * =========================================================
- */
+ * ======================================================= */
 
 function Divider({
   styles,
@@ -1516,20 +1253,16 @@ function Divider({
   );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * MENU ITEM
- * =========================================================
- */
+ * ======================================================= */
 
 function MenuItem({
   icon,
   title,
   onPress,
-  danger =
-    false,
-  loading =
-    false,
+  danger = false,
+  loading = false,
   colors,
   styles,
 }: {
@@ -1571,6 +1304,9 @@ function MenuItem({
 
         pressed &&
           styles.itemPressed,
+
+        loading &&
+          styles.disabled,
       ]}
     >
       <View
@@ -1593,9 +1329,7 @@ function MenuItem({
             name={
               icon
             }
-            size={
-              19
-            }
+            size={19}
             color={
               danger
                 ? colors.danger
@@ -1621,9 +1355,7 @@ function MenuItem({
       {!danger ? (
         <Ionicons
           name="chevron-forward"
-          size={
-            16
-          }
+          size={16}
           color={
             colors.textMuted
           }
@@ -1633,17 +1365,19 @@ function MenuItem({
   );
 }
 
-/*
- * =========================================================
+/* =========================================================
  * STYLES
- * =========================================================
- */
+ * ======================================================= */
 
 function createStyles(
   colors:
     AppThemeColors,
 ) {
   return StyleSheet.create({
+    /* =====================================================
+     * HEADER
+     * =================================================== */
+
     header: {
       width:
         '100%',
@@ -1674,18 +1408,22 @@ function createStyles(
     },
 
     titleArea: {
-      flex: 1,
+      flex:
+        1,
 
-      minWidth: 0,
+      minWidth:
+        0,
 
       paddingRight:
         12,
     },
 
     pageTitle: {
-      fontSize: 20,
+      fontSize:
+        20,
 
-      lineHeight: 25,
+      lineHeight:
+        25,
 
       fontWeight:
         '800',
@@ -1695,9 +1433,11 @@ function createStyles(
     },
 
     roleText: {
-      marginTop: 2,
+      marginTop:
+        2,
 
-      fontSize: 12,
+      fontSize:
+        12,
 
       fontWeight:
         '500',
@@ -1706,6 +1446,10 @@ function createStyles(
         colors.textMuted,
     },
 
+    /* =====================================================
+     * HEADER ACCOUNT
+     * =================================================== */
+
     accountButton: {
       flexDirection:
         'row',
@@ -1713,9 +1457,11 @@ function createStyles(
       alignItems:
         'center',
 
-      gap: 5,
+      gap:
+        5,
 
-      padding: 4,
+      padding:
+        4,
 
       borderRadius:
         30,
@@ -1726,10 +1472,17 @@ function createStyles(
         0.7,
     },
 
-    avatar: {
-      width: 40,
+    disabled: {
+      opacity:
+        0.55,
+    },
 
-      height: 40,
+    avatar: {
+      width:
+        40,
+
+      height:
+        40,
 
       borderRadius:
         20,
@@ -1746,7 +1499,8 @@ function createStyles(
       backgroundColor:
         colors.primarySoft,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
       borderColor:
         colors.border,
@@ -1761,7 +1515,8 @@ function createStyles(
     },
 
     avatarText: {
-      fontSize: 15,
+      fontSize:
+        15,
 
       fontWeight:
         '800',
@@ -1770,23 +1525,34 @@ function createStyles(
         colors.primary,
     },
 
+    /* =====================================================
+     * OVERLAY
+     * =================================================== */
+
     overlay: {
-      flex: 1,
+      flex:
+        1,
 
       backgroundColor:
         'rgba(0,0,0,0.34)',
     },
 
+    /* =====================================================
+     * MENU
+     * =================================================== */
+
     menuCard: {
       position:
         'absolute',
 
-      right: 14,
+      right:
+        14,
 
-      width: 280,
+      width:
+        280,
 
-      maxHeight:
-        540,
+      overflow:
+        'hidden',
 
       paddingHorizontal:
         10,
@@ -1800,7 +1566,8 @@ function createStyles(
       backgroundColor:
         colors.card,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
       borderColor:
         colors.border,
@@ -1809,8 +1576,11 @@ function createStyles(
         '#000000',
 
       shadowOffset: {
-        width: 0,
-        height: 8,
+        width:
+          0,
+
+        height:
+          8,
       },
 
       shadowOpacity:
@@ -1819,11 +1589,17 @@ function createStyles(
       shadowRadius:
         18,
 
-      elevation: 12,
+      elevation:
+        12,
     },
 
+    /* =====================================================
+     * CURRENT ACCOUNT
+     * =================================================== */
+
     currentAccount: {
-      minHeight: 58,
+      minHeight:
+        58,
 
       flexDirection:
         'row',
@@ -1838,8 +1614,23 @@ function createStyles(
         14,
     },
 
+    /* =====================================================
+     * SAVED ACCOUNTS
+     * =================================================== */
+
+    accountsViewport: {
+      maxHeight:
+        190,
+    },
+
+    accountsContent: {
+      paddingVertical:
+        1,
+    },
+
     savedAccount: {
-      minHeight: 58,
+      minHeight:
+        58,
 
       flexDirection:
         'row',
@@ -1855,9 +1646,11 @@ function createStyles(
     },
 
     accountAvatar: {
-      width: 40,
+      width:
+        40,
 
-      height: 40,
+      height:
+        40,
 
       borderRadius:
         20,
@@ -1884,7 +1677,8 @@ function createStyles(
     },
 
     accountAvatarText: {
-      fontSize: 14,
+      fontSize:
+        14,
 
       fontWeight:
         '800',
@@ -1894,19 +1688,22 @@ function createStyles(
     },
 
     accountText: {
-      flex: 1,
+      flex:
+        1,
+
+      minWidth:
+        0,
 
       marginLeft:
         10,
 
       marginRight:
         8,
-
-      minWidth: 0,
     },
 
     accountName: {
-      fontSize: 14,
+      fontSize:
+        14,
 
       fontWeight:
         '700',
@@ -1916,7 +1713,8 @@ function createStyles(
     },
 
     accountId: {
-      marginTop: 2,
+      marginTop:
+        2,
 
       fontSize:
         11.5,
@@ -1925,8 +1723,13 @@ function createStyles(
         colors.textMuted,
     },
 
+    /* =====================================================
+     * ADD ACCOUNT
+     * =================================================== */
+
     addAccount: {
-      minHeight: 50,
+      minHeight:
+        50,
 
       flexDirection:
         'row',
@@ -1937,16 +1740,19 @@ function createStyles(
       paddingHorizontal:
         8,
 
-      marginTop: 3,
+      marginTop:
+        3,
 
       borderRadius:
         13,
     },
 
     addIcon: {
-      width: 36,
+      width:
+        36,
 
-      height: 36,
+      height:
+        36,
 
       borderRadius:
         18,
@@ -1965,7 +1771,8 @@ function createStyles(
       marginLeft:
         10,
 
-      fontSize: 14,
+      fontSize:
+        14,
 
       fontWeight:
         '600',
@@ -1978,19 +1785,23 @@ function createStyles(
       paddingHorizontal:
         10,
 
-      paddingVertical:
-        6,
+      paddingBottom:
+        5,
 
       color:
         colors.danger,
 
-      fontSize: 12,
-
-      lineHeight: 16,
+      fontSize:
+        12,
     },
 
+    /* =====================================================
+     * DIVIDER
+     * =================================================== */
+
     divider: {
-      height: 1,
+      height:
+        1,
 
       marginVertical:
         5,
@@ -1999,8 +1810,13 @@ function createStyles(
         colors.border,
     },
 
+    /* =====================================================
+     * MENU ITEM
+     * =================================================== */
+
     menuItem: {
-      height: 48,
+      height:
+        48,
 
       paddingHorizontal:
         8,
@@ -2021,9 +1837,11 @@ function createStyles(
     },
 
     menuIcon: {
-      width: 34,
+      width:
+        34,
 
-      height: 34,
+      height:
+        34,
 
       marginRight:
         10,
@@ -2047,12 +1865,14 @@ function createStyles(
     },
 
     menuText: {
-      flex: 1,
+      flex:
+        1,
 
       color:
         colors.textSecondary,
 
-      fontSize: 14,
+      fontSize:
+        14,
 
       fontWeight:
         '600',

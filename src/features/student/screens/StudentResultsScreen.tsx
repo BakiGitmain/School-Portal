@@ -1,6 +1,7 @@
 import React, {
   ComponentProps,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -46,7 +47,8 @@ type SemesterMode =
 type AssessmentMode =
   | 'test'
   | 'mid'
-  | 'finalExam';
+  | 'finalExam'
+  | 'total';
 
 type IoniconName =
   ComponentProps<
@@ -54,17 +56,19 @@ type IoniconName =
   >['name'];
 
 type ResultRpcRow = {
-  class_id: string;
-  class_name: string;
-  subject: string;
+  class_id:
+    string;
+
+  class_name:
+    string;
+
+  subject:
+    string;
 
   first_test:
     number | string | null;
 
   first_mid:
-    number | string | null;
-
-  first_assignment:
     number | string | null;
 
   first_final_exam:
@@ -79,9 +83,6 @@ type ResultRpcRow = {
   second_mid:
     number | string | null;
 
-  second_assignment:
-    number | string | null;
-
   second_final_exam:
     number | string | null;
 
@@ -90,20 +91,58 @@ type ResultRpcRow = {
 
   final_total:
     number | string | null;
+
+  first_test_published:
+    boolean;
+
+  first_mid_published:
+    boolean;
+
+  first_final_exam_published:
+    boolean;
+
+  first_total_published:
+    boolean;
+
+  second_test_published:
+    boolean;
+
+  second_mid_published:
+    boolean;
+
+  second_final_exam_published:
+    boolean;
+
+  second_total_published:
+    boolean;
+
+  final_published:
+    boolean;
 };
 
 type SemesterScores = {
-  test: number | null;
-  mid: number | null;
-  assignment: number | null;
-  finalExam: number | null;
-  total: number | null;
+  test:
+    number | null;
+
+  mid:
+    number | null;
+
+  finalExam:
+    number | null;
+
+  total:
+    number | null;
 };
 
 type ResultRow = {
-  classId: string;
-  className: string;
-  subject: string;
+  classId:
+    string;
+
+  className:
+    string;
+
+  subject:
+    string;
 
   first:
     SemesterScores;
@@ -113,6 +152,64 @@ type ResultRow = {
 
   finalTotal:
     number | null;
+};
+
+type PublicationState = {
+  first: {
+    test:
+      boolean;
+
+    mid:
+      boolean;
+
+    finalExam:
+      boolean;
+
+    total:
+      boolean;
+  };
+
+  second: {
+    test:
+      boolean;
+
+    mid:
+      boolean;
+
+    finalExam:
+      boolean;
+
+    total:
+      boolean;
+  };
+
+  final:
+    boolean;
+};
+
+type SubjectRank = {
+  subject:
+    string;
+
+  rank:
+    number;
+
+  rankedStudents:
+    number;
+};
+
+type RankData = {
+  overallRank:
+    number | null;
+
+  rankedStudents:
+    number;
+
+  classSize:
+    number;
+
+  subjects:
+    SubjectRank[];
 };
 
 /*
@@ -141,9 +238,12 @@ function numberOrNull(
     undefined,
 ) {
   if (
-    value === null ||
-    value === undefined ||
-    value === ''
+    value ===
+      null ||
+    value ===
+      undefined ||
+    value ===
+      ''
   ) {
     return null;
   }
@@ -165,7 +265,8 @@ function displayNumber(
     number | null,
 ) {
   if (
-    value === null
+    value ===
+    null
   ) {
     return '—';
   }
@@ -181,56 +282,55 @@ function displayNumber(
   }
 
   return value
-    .toFixed(
-      1,
-    )
+    .toFixed(1)
     .replace(
       /\.0$/,
       '',
     );
 }
 
-/*
- * This is only the displayed grade.
- * It does NOT change the saved mark.
- */
-
 function gradeForPercentage(
   percentage:
     number | null,
 ) {
   if (
-    percentage === null
+    percentage ===
+    null
   ) {
     return '—';
   }
 
   if (
-    percentage >= 90
+    percentage >=
+    90
   ) {
     return 'A+';
   }
 
   if (
-    percentage >= 80
+    percentage >=
+    80
   ) {
     return 'A';
   }
 
   if (
-    percentage >= 70
+    percentage >=
+    70
   ) {
     return 'B';
   }
 
   if (
-    percentage >= 60
+    percentage >=
+    60
   ) {
     return 'C';
   }
 
   if (
-    percentage >= 50
+    percentage >=
+    50
   ) {
     return 'D';
   }
@@ -246,8 +346,10 @@ function scorePercentage(
     number,
 ) {
   if (
-    score === null ||
-    max <= 0
+    score ===
+      null ||
+    max <=
+      0
   ) {
     return null;
   }
@@ -255,7 +357,17 @@ function scorePercentage(
   return (
     score /
     max
-  ) * 100;
+  ) *
+    100;
+}
+
+function normalizeSubject(
+  subject:
+    string,
+) {
+  return subject
+    .trim()
+    .toLowerCase();
 }
 
 function subjectIcon(
@@ -385,27 +497,6 @@ function subjectIcon(
   return 'school-outline';
 }
 
-function semesterLabel(
-  semester:
-    SemesterMode,
-) {
-  if (
-    semester ===
-    'first'
-  ) {
-    return 'Semester 1';
-  }
-
-  if (
-    semester ===
-    'second'
-  ) {
-    return 'Semester 2';
-  }
-
-  return 'Final Result';
-}
-
 function assessmentLabel(
   assessment:
     AssessmentMode,
@@ -424,7 +515,14 @@ function assessmentLabel(
     return 'Mid';
   }
 
-  return 'Final Exam';
+  if (
+    assessment ===
+    'finalExam'
+  ) {
+    return 'Final Exam';
+  }
+
+  return 'Total';
 }
 
 function assessmentMax(
@@ -445,8 +543,49 @@ function assessmentMax(
     return 30;
   }
 
-  return 40;
+  if (
+    assessment ===
+    'finalExam'
+  ) {
+    return 40;
+  }
+
+  return 100;
 }
+
+const EMPTY_PUBLICATIONS:
+  PublicationState = {
+  first: {
+    test:
+      false,
+
+    mid:
+      false,
+
+    finalExam:
+      false,
+
+    total:
+      false,
+  },
+
+  second: {
+    test:
+      false,
+
+    mid:
+      false,
+
+    finalExam:
+      false,
+
+    total:
+      false,
+  },
+
+  final:
+    false,
+};
 
 /*
  * =========================================================
@@ -507,11 +646,39 @@ export default function StudentResultsScreen() {
     >([]);
 
   const [
+    publications,
+    setPublications,
+  ] =
+    useState<
+      PublicationState
+    >(
+      EMPTY_PUBLICATIONS,
+    );
+
+  const [
+    rankData,
+    setRankData,
+  ] =
+    useState<
+      RankData | null
+    >(
+      null,
+    );
+
+  const [
     loading,
     setLoading,
   ] =
     useState(
       true,
+    );
+
+  const [
+    rankLoading,
+    setRankLoading,
+  ] =
+    useState(
+      false,
     );
 
   const [
@@ -526,11 +693,7 @@ export default function StudentResultsScreen() {
     error,
     setError,
   ] =
-    useState<
-      string | null
-    >(
-      null,
-    );
+    useState('');
 
   /*
    * =====================================================
@@ -557,9 +720,7 @@ export default function StudentResultsScreen() {
             );
           }
 
-          setError(
-            null,
-          );
+          setError('');
 
           const {
             data,
@@ -567,7 +728,7 @@ export default function StudentResultsScreen() {
               resultError,
           } =
             await supabase.rpc(
-              'get_my_results',
+              'get_my_published_results',
               {
                 p_school_year:
                   schoolYear,
@@ -587,11 +748,10 @@ export default function StudentResultsScreen() {
             ) as
               ResultRpcRow[];
 
-          const mapped =
+          const mapped:
+            ResultRow[] =
             rows.map(
-              (
-                row,
-              ): ResultRow => ({
+              row => ({
                 classId:
                   String(
                     row.class_id,
@@ -620,11 +780,6 @@ export default function StudentResultsScreen() {
                       row.first_mid,
                     ),
 
-                  assignment:
-                    numberOrNull(
-                      row.first_assignment,
-                    ),
-
                   finalExam:
                     numberOrNull(
                       row.first_final_exam,
@@ -645,11 +800,6 @@ export default function StudentResultsScreen() {
                   mid:
                     numberOrNull(
                       row.second_mid,
-                    ),
-
-                  assignment:
-                    numberOrNull(
-                      row.second_assignment,
                     ),
 
                   finalExam:
@@ -673,11 +823,73 @@ export default function StudentResultsScreen() {
           setResults(
             mapped,
           );
+
+          const first =
+            rows[0];
+
+          if (
+            first
+          ) {
+            setPublications({
+              first: {
+                test:
+                  Boolean(
+                    first.first_test_published,
+                  ),
+
+                mid:
+                  Boolean(
+                    first.first_mid_published,
+                  ),
+
+                finalExam:
+                  Boolean(
+                    first.first_final_exam_published,
+                  ),
+
+                total:
+                  Boolean(
+                    first.first_total_published,
+                  ),
+              },
+
+              second: {
+                test:
+                  Boolean(
+                    first.second_test_published,
+                  ),
+
+                mid:
+                  Boolean(
+                    first.second_mid_published,
+                  ),
+
+                finalExam:
+                  Boolean(
+                    first.second_final_exam_published,
+                  ),
+
+                total:
+                  Boolean(
+                    first.second_total_published,
+                  ),
+              },
+
+              final:
+                Boolean(
+                  first.final_published,
+                ),
+            });
+          } else {
+            setPublications(
+              EMPTY_PUBLICATIONS,
+            );
+          }
         } catch (
           loadError
         ) {
           console.log(
-            'STUDENT RESULTS:',
+            'STUDENT PUBLISHED RESULTS:',
             loadError,
           );
 
@@ -715,35 +927,264 @@ export default function StudentResultsScreen() {
 
   /*
    * =====================================================
-   * CURRENT SCORE
+   * CURRENT PUBLICATION
    * =====================================================
    */
 
-  function getSemesterScores(
-    row:
-      ResultRow,
-  ) {
-    return semester ===
-      'first'
-      ? row.first
-      : row.second;
-  }
+  const selectedPublished =
+    useMemo(
+      () => {
+        if (
+          semester ===
+          'final'
+        ) {
+          return publications.final;
+        }
+
+        return publications[
+          semester
+        ][
+          assessment
+        ];
+      },
+      [
+        assessment,
+        publications,
+        semester,
+      ],
+    );
+
+  /*
+   * =====================================================
+   * RANK VISIBILITY
+   * =====================================================
+   */
+
+  const rankAllowed =
+    selectedPublished &&
+    (
+      semester ===
+        'final' ||
+      assessment ===
+        'total'
+    );
+
+  /*
+   * =====================================================
+   * LOAD RANK
+   * =====================================================
+   */
+
+  useEffect(
+    () => {
+      let active =
+        true;
+
+      async function loadRank() {
+        if (
+          !rankAllowed
+        ) {
+          setRankData(
+            null,
+          );
+
+          return;
+        }
+
+        try {
+          setRankLoading(
+            true,
+          );
+
+          const {
+            data,
+            error:
+              rankError,
+          } =
+            await supabase.rpc(
+              'get_my_published_ranks',
+              {
+                p_school_year:
+                  schoolYear,
+
+                p_period:
+                  semester,
+              },
+            );
+
+          if (
+            rankError
+          ) {
+            throw rankError;
+          }
+
+          if (
+            !active
+          ) {
+            return;
+          }
+
+          const raw =
+            (
+              data ??
+              {}
+            ) as {
+              overallRank?:
+                number | null;
+
+              rankedStudents?:
+                number;
+
+              classSize?:
+                number;
+
+              subjects?:
+                Array<{
+                  subject:
+                    string;
+
+                  rank:
+                    number;
+
+                  rankedStudents:
+                    number;
+                }>;
+            };
+
+          setRankData({
+            overallRank:
+              raw.overallRank ??
+              null,
+
+            rankedStudents:
+              Number(
+                raw.rankedStudents ??
+                  0,
+              ),
+
+            classSize:
+              Number(
+                raw.classSize ??
+                  0,
+              ),
+
+            subjects:
+              Array.isArray(
+                raw.subjects,
+              )
+                ? raw.subjects.map(
+                    item => ({
+                      subject:
+                        String(
+                          item.subject,
+                        ),
+
+                      rank:
+                        Number(
+                          item.rank,
+                        ),
+
+                      rankedStudents:
+                        Number(
+                          item.rankedStudents,
+                        ),
+                    }),
+                  )
+                : [],
+          });
+        } catch (
+          rankError
+        ) {
+          console.log(
+            'STUDENT RANK:',
+            rankError,
+          );
+
+          if (
+            active
+          ) {
+            setRankData(
+              null,
+            );
+          }
+        } finally {
+          if (
+            active
+          ) {
+            setRankLoading(
+              false,
+            );
+          }
+        }
+      }
+
+      void loadRank();
+
+      return () => {
+        active =
+          false;
+      };
+    },
+    [
+      rankAllowed,
+      schoolYear,
+      semester,
+    ],
+  );
+
+  /*
+   * =====================================================
+   * SUBJECT RANK MAP
+   * =====================================================
+   */
+
+  const subjectRankMap =
+    useMemo(
+      () => {
+        const map =
+          new Map<
+            string,
+            SubjectRank
+          >();
+
+        for (
+          const rank of
+          rankData
+            ?.subjects ??
+          []
+        ) {
+          map.set(
+            normalizeSubject(
+              rank.subject,
+            ),
+            rank,
+          );
+        }
+
+        return map;
+      },
+      [
+        rankData,
+      ],
+    );
+
+  /*
+   * =====================================================
+   * SCORE
+   * =====================================================
+   */
 
   function scoreForResult(
-    row:
+    result:
       ResultRow,
   ) {
-    /*
-     * Final result mode.
-     */
-
     if (
       semester ===
       'final'
     ) {
       return {
         score:
-          row.finalTotal,
+          result.finalTotal,
 
         max:
           100,
@@ -751,55 +1192,40 @@ export default function StudentResultsScreen() {
     }
 
     const scores =
-      getSemesterScores(
-        row,
-      );
-
-    if (
-      assessment ===
-      'test'
-    ) {
-      return {
-        score:
-          scores.test,
-
-        max:
-          10,
-      };
-    }
-
-    if (
-      assessment ===
-      'mid'
-    ) {
-      return {
-        score:
-          scores.mid,
-
-        max:
-          30,
-      };
-    }
+      semester ===
+      'first'
+        ? result.first
+        : result.second;
 
     return {
       score:
-        scores.finalExam,
+        scores[
+          assessment
+        ],
 
       max:
-        40,
+        assessmentMax(
+          assessment,
+        ),
     };
   }
 
   /*
    * =====================================================
-   * OVERALL AVERAGE
+   * OVERALL
    * =====================================================
    */
 
   const overall =
     useMemo(
       () => {
-        const percentages:
+        if (
+          !selectedPublished
+        ) {
+          return null;
+        }
+
+        const values:
           number[] =
           [];
 
@@ -807,61 +1233,86 @@ export default function StudentResultsScreen() {
           const result of
           results
         ) {
-          const {
-            score,
-            max,
-          } =
-            scoreForResult(
-              result,
-            );
+          let score:
+            number | null;
 
-          const percentage =
+          let max:
+            number;
+
+          if (
+            semester ===
+            'final'
+          ) {
+            score =
+              result.finalTotal;
+
+            max =
+              100;
+          } else {
+            const scores =
+              semester ===
+              'first'
+                ? result.first
+                : result.second;
+
+            score =
+              scores[
+                assessment
+              ];
+
+            max =
+              assessmentMax(
+                assessment,
+              );
+          }
+
+          const percent =
             scorePercentage(
               score,
               max,
             );
 
           if (
-            percentage !==
+            percent !==
             null
           ) {
-            percentages.push(
-              percentage,
+            values.push(
+              percent,
             );
           }
         }
 
         if (
-          percentages.length ===
+          values.length ===
           0
         ) {
           return null;
         }
 
         return (
-          percentages.reduce(
+          values.reduce(
             (
-              total,
+              sum,
               value,
             ) =>
-              total +
+              sum +
               value,
             0,
           ) /
-          percentages.length
+          values.length
         );
       },
       [
-        results,
-        semester,
         assessment,
+        results,
+        selectedPublished,
+        semester,
       ],
     );
 
   const className =
-    results[
-      0
-    ]?.className ??
+    results[0]
+      ?.className ??
     '';
 
   /*
@@ -933,7 +1384,7 @@ export default function StudentResultsScreen() {
         />
       }
     >
-      {/* HEADER */}
+      {/* TITLE */}
 
       <Text
         style={
@@ -951,6 +1402,7 @@ export default function StudentResultsScreen() {
         {className
           ? `${className} • `
           : ''}
+
         {schoolYear}
       </Text>
 
@@ -964,10 +1416,8 @@ export default function StudentResultsScreen() {
         >
           <Ionicons
             name="alert-circle-outline"
-            size={
-              20
-            }
-            color="#E5484D"
+            size={18}
+            color="#EF5D6C"
           />
 
           <Text
@@ -975,15 +1425,13 @@ export default function StudentResultsScreen() {
               styles.errorText
             }
           >
-            {
-              error
-            }
+            {error}
           </Text>
         </View>
       ) : null}
 
       {/* ================================================= */}
-      {/* SEMESTER SELECTOR */}
+      {/* SEMESTER */}
       {/* ================================================= */}
 
       <View
@@ -997,11 +1445,15 @@ export default function StudentResultsScreen() {
             semester ===
             'first'
           }
-          onPress={() =>
+          onPress={() => {
             setSemester(
               'first',
-            )
-          }
+            );
+
+            setAssessment(
+              'test',
+            );
+          }}
           styles={
             styles
           }
@@ -1013,11 +1465,15 @@ export default function StudentResultsScreen() {
             semester ===
             'second'
           }
-          onPress={() =>
+          onPress={() => {
             setSemester(
               'second',
-            )
-          }
+            );
+
+            setAssessment(
+              'test',
+            );
+          }}
           styles={
             styles
           }
@@ -1041,7 +1497,7 @@ export default function StudentResultsScreen() {
       </View>
 
       {/* ================================================= */}
-      {/* ASSESSMENT SELECTOR */}
+      {/* ASSESSMENT */}
       {/* ================================================= */}
 
       {semester !==
@@ -1049,7 +1505,7 @@ export default function StudentResultsScreen() {
         <>
           <View
             style={
-              styles.sectionRow
+              styles.sectionHeader
             }
           >
             <Text
@@ -1062,20 +1518,19 @@ export default function StudentResultsScreen() {
 
             <Text
               style={
-                styles.sectionHint
+                styles.sectionSmall
               }
             >
-              {
-                semesterLabel(
-                  semester,
-                )
-              }
+              {semester ===
+              'first'
+                ? 'Semester 1'
+                : 'Semester 2'}
             </Text>
           </View>
 
           <View
             style={
-              styles.assessmentTabs
+              styles.assessmentGrid
             }
           >
             <AssessmentButton
@@ -1085,6 +1540,11 @@ export default function StudentResultsScreen() {
                 assessment ===
                 'test'
               }
+              published={
+                publications[
+                  semester
+                ].test
+              }
               onPress={() =>
                 setAssessment(
                   'test',
@@ -1092,6 +1552,9 @@ export default function StudentResultsScreen() {
               }
               styles={
                 styles
+              }
+              colors={
+                colors
               }
             />
 
@@ -1102,6 +1565,11 @@ export default function StudentResultsScreen() {
                 assessment ===
                 'mid'
               }
+              published={
+                publications[
+                  semester
+                ].mid
+              }
               onPress={() =>
                 setAssessment(
                   'mid',
@@ -1109,6 +1577,9 @@ export default function StudentResultsScreen() {
               }
               styles={
                 styles
+              }
+              colors={
+                colors
               }
             />
 
@@ -1119,6 +1590,11 @@ export default function StudentResultsScreen() {
                 assessment ===
                 'finalExam'
               }
+              published={
+                publications[
+                  semester
+                ].finalExam
+              }
               onPress={() =>
                 setAssessment(
                   'finalExam',
@@ -1127,134 +1603,57 @@ export default function StudentResultsScreen() {
               styles={
                 styles
               }
+              colors={
+                colors
+              }
+            />
+
+            <AssessmentButton
+              title="Total"
+              icon="stats-chart-outline"
+              active={
+                assessment ===
+                'total'
+              }
+              published={
+                publications[
+                  semester
+                ].total
+              }
+              onPress={() =>
+                setAssessment(
+                  'total',
+                )
+              }
+              styles={
+                styles
+              }
+              colors={
+                colors
+              }
             />
           </View>
         </>
-      ) : (
+      ) : null}
+
+      {/* ================================================= */}
+      {/* NOT PUBLISHED */}
+      {/* ================================================= */}
+
+      {!selectedPublished ? (
         <View
           style={
-            styles.finalInfo
+            styles.lockedCard
           }
         >
           <View
             style={
-              styles.finalInfoIcon
+              styles.lockedIcon
             }
           >
             <Ionicons
-              name="ribbon-outline"
-              size={
-                20
-              }
-              color={
-                colors.primary
-              }
-            />
-          </View>
-
-          <View
-            style={
-              styles.finalInfoText
-            }
-          >
-            <Text
-              style={
-                styles.finalInfoTitle
-              }
-            >
-              Final Result
-            </Text>
-
-            <Text
-              style={
-                styles.finalInfoSubtitle
-              }
-            >
-              Average of Semester 1 and Semester 2
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* ================================================= */}
-      {/* SUBJECTS HEADER */}
-      {/* ================================================= */}
-
-      <View
-        style={
-          styles.subjectHeader
-        }
-      >
-        <View>
-          <Text
-            style={
-              styles.subjectHeaderTitle
-            }
-          >
-            {semester ===
-            'final'
-              ? 'Final Results'
-              : assessmentLabel(
-                  assessment,
-                )}
-          </Text>
-
-          <Text
-            style={
-              styles.subjectHeaderSub
-            }
-          >
-            {results.length}{' '}
-            {results.length ===
-            1
-              ? 'subject'
-              : 'subjects'}
-          </Text>
-        </View>
-
-        {semester !==
-        'final' ? (
-          <View
-            style={
-              styles.maxBadge
-            }
-          >
-            <Text
-              style={
-                styles.maxBadgeText
-              }
-            >
-              /{
-                assessmentMax(
-                  assessment,
-                )
-              }
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* ================================================= */}
-      {/* RESULT LIST */}
-      {/* ================================================= */}
-
-      {results.length ===
-      0 ? (
-        <View
-          style={
-            styles.emptyCard
-          }
-        >
-          <View
-            style={
-              styles.emptyIcon
-            }
-          >
-            <Ionicons
-              name="ribbon-outline"
-              size={
-                29
-              }
+              name="lock-closed-outline"
+              size={22}
               color={
                 colors.primary
               }
@@ -1263,306 +1662,460 @@ export default function StudentResultsScreen() {
 
           <Text
             style={
-              styles.emptyTitle
+              styles.lockedTitle
             }
           >
-            No subjects yet
+            Not published yet
           </Text>
 
           <Text
             style={
-              styles.emptyText
+              styles.lockedText
             }
           >
-            Subjects assigned to this class will appear here.
+            This result will appear after the President publishes it.
           </Text>
         </View>
       ) : (
-        <View
-          style={
-            styles.resultList
-          }
-        >
-          {results.map(
-            (
-              result,
-            ) => {
-              const {
-                score,
-                max,
-              } =
-                scoreForResult(
-                  result,
-                );
+        <>
+          {/* ============================================= */}
+          {/* RANK — TOTAL / FINAL ONLY */}
+          {/* ============================================= */}
 
-              const percentage =
-                scorePercentage(
-                  score,
-                  max,
-                );
-
-              const grade =
-                gradeForPercentage(
-                  percentage,
-                );
-
-              const empty =
-                score ===
-                null;
-
-              return (
-                <View
-                  key={
-                    result.subject
+          {rankAllowed ? (
+            <View
+              style={
+                styles.rankCard
+              }
+            >
+              <View
+                style={
+                  styles.rankIcon
+                }
+              >
+                <Ionicons
+                  name="trophy-outline"
+                  size={24}
+                  color={
+                    colors.primary
                   }
+                />
+              </View>
+
+              <View
+                style={
+                  styles.rankInfo
+                }
+              >
+                <Text
                   style={
-                    styles.resultCard
+                    styles.rankTitle
                   }
                 >
-                  {/* ICON */}
+                  Class Rank
+                </Text>
 
-                  <View
-                    style={
-                      styles.subjectIcon
+                <Text
+                  style={
+                    styles.rankSubtitle
+                  }
+                >
+                  {semester ===
+                  'final'
+                    ? 'Final result'
+                    : 'Semester total /100'}
+                </Text>
+              </View>
+
+              <View
+                style={
+                  styles.rankValueBox
+                }
+              >
+                {rankLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={
+                      colors.primary
                     }
-                  >
-                    <Ionicons
-                      name={
-                        subjectIcon(
-                          result.subject,
-                        )
-                      }
-                      size={
-                        22
-                      }
-                      color={
-                        colors.primary
-                      }
-                    />
-                  </View>
-
-                  {/* SUBJECT */}
-
-                  <View
-                    style={
-                      styles.subjectInfo
-                    }
-                  >
+                  />
+                ) : rankData
+                    ?.overallRank ? (
+                  <>
                     <Text
                       style={
-                        styles.subjectName
-                      }
-                      numberOfLines={
-                        1
+                        styles.rankValue
                       }
                     >
+                      #
                       {
-                        result.subject
+                        rankData
+                          .overallRank
                       }
                     </Text>
 
                     <Text
                       style={
-                        styles.subjectStatus
+                        styles.rankOf
                       }
                     >
-                      {empty
-                        ? 'Not graded yet'
-                        : semester ===
-                            'final'
-                          ? 'Final average'
-                          : `${semesterLabel(
-                              semester,
-                            )} • ${assessmentLabel(
-                              assessment,
-                            )}`}
+                      of{' '}
+                      {
+                        rankData
+                          .rankedStudents
+                      }
                     </Text>
-                  </View>
-
-                  {/* SCORE */}
-
-                  <View
+                  </>
+                ) : (
+                  <Text
                     style={
-                      styles.scoreArea
+                      styles.rankEmpty
                     }
                   >
-                    <Text
-                      style={[
-                        styles.scoreText,
+                    —
+                  </Text>
+                )}
+              </View>
+            </View>
+          ) : null}
 
-                        empty &&
-                          styles.emptyScore,
-                      ]}
+          {/* ============================================= */}
+          {/* RESULTS HEADER */}
+          {/* ============================================= */}
+
+          <View
+            style={
+              styles.resultsHeader
+            }
+          >
+            <View>
+              <Text
+                style={
+                  styles.resultsHeaderTitle
+                }
+              >
+                {semester ===
+                'final'
+                  ? 'Final Result'
+                  : assessmentLabel(
+                      assessment,
+                    )}
+              </Text>
+
+              <Text
+                style={
+                  styles.resultsHeaderCount
+                }
+              >
+                {
+                  results.length
+                }{' '}
+                {results.length ===
+                1
+                  ? 'subject'
+                  : 'subjects'}
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.maxBadge
+              }
+            >
+              <Text
+                style={
+                  styles.maxBadgeText
+                }
+              >
+                /
+                {semester ===
+                'final'
+                  ? 100
+                  : assessmentMax(
+                      assessment,
+                    )}
+              </Text>
+            </View>
+          </View>
+
+          {/* ============================================= */}
+          {/* SUBJECTS */}
+          {/* ============================================= */}
+
+          <View
+            style={
+              styles.subjectList
+            }
+          >
+            {results.map(
+              result => {
+                const {
+                  score,
+                  max,
+                } =
+                  scoreForResult(
+                    result,
+                  );
+
+                const percentage =
+                  scorePercentage(
+                    score,
+                    max,
+                  );
+
+                const grade =
+                  gradeForPercentage(
+                    percentage,
+                  );
+
+                const rank =
+                  rankAllowed
+                    ? subjectRankMap.get(
+                        normalizeSubject(
+                          result.subject,
+                        ),
+                      )
+                    : undefined;
+
+                return (
+                  <View
+                    key={
+                      result.subject
+                    }
+                    style={
+                      styles.subjectCard
+                    }
+                  >
+                    <View
+                      style={
+                        styles.subjectIcon
+                      }
                     >
-                      {displayNumber(
-                        score,
-                      )}
-                    </Text>
+                      <Ionicons
+                        name={
+                          subjectIcon(
+                            result.subject,
+                          )
+                        }
+                        size={21}
+                        color={
+                          colors.primary
+                        }
+                      />
+                    </View>
 
-                    {!empty ? (
+                    <View
+                      style={
+                        styles.subjectInfo
+                      }
+                    >
                       <Text
                         style={
-                          styles.scoreMax
+                          styles.subjectName
+                        }
+                        numberOfLines={1}
+                      >
+                        {
+                          result.subject
+                        }
+                      </Text>
+
+                      {score ===
+                      null ? (
+                        <Text
+                          style={
+                            styles.subjectSub
+                          }
+                        >
+                          No score
+                        </Text>
+                      ) : rank ? (
+                        <View
+                          style={
+                            styles.subjectRank
+                          }
+                        >
+                          <Ionicons
+                            name="podium-outline"
+                            size={10}
+                            color={
+                              colors.primary
+                            }
+                          />
+
+                          <Text
+                            style={
+                              styles.subjectRankText
+                            }
+                          >
+                            Rank #
+                            {
+                              rank.rank
+                            }{' '}
+                            of{' '}
+                            {
+                              rank.rankedStudents
+                            }
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text
+                          style={
+                            styles.subjectSub
+                          }
+                        >
+                          {semester ===
+                          'final'
+                            ? 'Final'
+                            : assessmentLabel(
+                                assessment,
+                              )}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View
+                      style={
+                        styles.scoreArea
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.score
                         }
                       >
-                        /{max}
+                        {
+                          displayNumber(
+                            score,
+                          )
+                        }
                       </Text>
-                    ) : null}
-                  </View>
 
-                  {/* GRADE */}
+                      {score !==
+                      null ? (
+                        <Text
+                          style={
+                            styles.scoreMax
+                          }
+                        >
+                          /{max}
+                        </Text>
+                      ) : null}
+                    </View>
 
-                  <View
-                    style={[
-                      styles.gradeBadge,
-
-                      empty &&
-                        styles.emptyGrade,
-                    ]}
-                  >
-                    <Text
+                    <View
                       style={[
-                        styles.gradeText,
+                        styles.gradeBox,
 
-                        empty &&
-                          styles.emptyGradeText,
+                        score ===
+                          null &&
+                          styles.gradeBoxEmpty,
                       ]}
                     >
-                      {
-                        grade
-                      }
-                    </Text>
+                      <Text
+                        style={[
+                          styles.gradeText,
+
+                          score ===
+                            null &&
+                            styles.gradeTextEmpty,
+                        ]}
+                      >
+                        {grade}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              );
-            },
-          )}
-        </View>
-      )}
-
-      {/* ================================================= */}
-      {/* OVERALL */}
-      {/* ================================================= */}
-
-      <View
-        style={
-          styles.overallCard
-        }
-      >
-        <View
-          style={
-            styles.overallIcon
-          }
-        >
-          <Ionicons
-            name="stats-chart-outline"
-            size={
-              23
-            }
-            color={
-              colors.primary
-            }
-          />
-        </View>
-
-        <View
-          style={
-            styles.overallInfo
-          }
-        >
-          <Text
-            style={
-              styles.overallLabel
-            }
-          >
-            Overall Average
-          </Text>
-
-          <Text
-            style={
-              styles.overallSmall
-            }
-          >
-            {semester ===
-            'final'
-              ? 'All final subject results'
-              : `${semesterLabel(
-                  semester,
-                )} • ${assessmentLabel(
-                  assessment,
-                )}`}
-          </Text>
-        </View>
-
-        <View
-          style={
-            styles.overallScore
-          }
-        >
-          <Text
-            style={
-              styles.overallScoreText
-            }
-          >
-            {overall ===
-            null
-              ? '—'
-              : `${Math.round(
-                  overall,
-                )}%`}
-          </Text>
-        </View>
-
-        <View
-          style={
-            styles.overallGrade
-          }
-        >
-          <Text
-            style={
-              styles.overallGradeText
-            }
-          >
-            {gradeForPercentage(
-              overall,
+                );
+              },
             )}
-          </Text>
-        </View>
-      </View>
+          </View>
 
-      {/* ================================================= */}
-      {/* SMALL INFO */}
-      {/* ================================================= */}
+          {/* ============================================= */}
+          {/* OVERALL */}
+          {/* ============================================= */}
 
-      <View
-        style={
-          styles.infoCard
-        }
-      >
-        <View
-          style={
-            styles.infoIcon
-          }
-        >
-          <Ionicons
-            name="information-circle-outline"
-            size={
-              21
+          <View
+            style={
+              styles.overallCard
             }
-            color={
-              colors.primary
-            }
-          />
-        </View>
+          >
+            <View
+              style={
+                styles.overallIcon
+              }
+            >
+              <Ionicons
+                name="stats-chart-outline"
+                size={22}
+                color={
+                  colors.primary
+                }
+              />
+            </View>
 
-        <Text
-          style={
-            styles.infoText
-          }
-        >
-          Results shown here are saved directly by your subject teachers.
-        </Text>
-      </View>
+            <View
+              style={
+                styles.overallInfo
+              }
+            >
+              <Text
+                style={
+                  styles.overallTitle
+                }
+              >
+                Overall Average
+              </Text>
+
+              <Text
+                style={
+                  styles.overallSub
+                }
+              >
+                {semester ===
+                'final'
+                  ? 'Final'
+                  : assessment ===
+                      'total'
+                    ? 'All subjects /100'
+                    : assessmentLabel(
+                        assessment,
+                      )}
+              </Text>
+            </View>
+
+            <Text
+              style={
+                styles.overallScore
+              }
+            >
+              {overall ===
+              null
+                ? '—'
+                : `${Math.round(
+                    overall,
+                  )}%`}
+            </Text>
+
+            <View
+              style={
+                styles.overallGrade
+              }
+            >
+              <Text
+                style={
+                  styles.overallGradeText
+                }
+              >
+                {
+                  gradeForPercentage(
+                    overall,
+                  )
+                }
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -1599,26 +2152,21 @@ function SemesterButton({
         onPress
       }
       style={[
-        styles.semesterTab,
+        styles.semesterButton,
 
         active &&
-          styles.semesterTabActive,
+          styles.semesterButtonActive,
       ]}
     >
       <Text
         style={[
-          styles.semesterTabText,
+          styles.semesterText,
 
           active &&
-            styles.semesterTabTextActive,
+            styles.semesterTextActive,
         ]}
-        numberOfLines={
-          1
-        }
       >
-        {
-          title
-        }
+        {title}
       </Text>
     </Pressable>
   );
@@ -1634,8 +2182,10 @@ function AssessmentButton({
   title,
   icon,
   active,
+  published,
   onPress,
   styles,
+  colors,
 }: {
   title:
     string;
@@ -1646,6 +2196,9 @@ function AssessmentButton({
   active:
     boolean;
 
+  published:
+    boolean;
+
   onPress:
     () => void;
 
@@ -1653,6 +2206,9 @@ function AssessmentButton({
     ReturnType<
       typeof createStyles
     >;
+
+  colors:
+    AppThemeColors;
 }) {
   return (
     <Pressable
@@ -1670,15 +2226,11 @@ function AssessmentButton({
         name={
           icon
         }
-        size={
-          18
-        }
+        size={16}
         color={
           active
             ? '#FFFFFF'
-            : styles
-                .assessmentIconColor
-                .color
+            : colors.primary
         }
       />
 
@@ -1689,11 +2241,22 @@ function AssessmentButton({
           active &&
             styles.assessmentTextActive,
         ]}
+        numberOfLines={1}
       >
-        {
-          title
-        }
+        {title}
       </Text>
+
+      {!published ? (
+        <Ionicons
+          name="lock-closed"
+          size={8}
+          color={
+            active
+              ? '#FFFFFF'
+              : colors.textMuted
+          }
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -1710,7 +2273,8 @@ function createStyles(
 ) {
   return StyleSheet.create({
     screen: {
-      flex: 1,
+      flex:
+        1,
 
       backgroundColor:
         colors.background,
@@ -1718,17 +2282,18 @@ function createStyles(
 
     content: {
       paddingHorizontal:
-        10,
+        8,
 
       paddingTop:
-        14,
+        13,
 
       paddingBottom:
-        130,
+        125,
     },
 
     center: {
-      flex: 1,
+      flex:
+        1,
 
       alignItems:
         'center',
@@ -1742,27 +2307,18 @@ function createStyles(
 
     loadingText: {
       marginTop:
-        10,
+        9,
 
       fontSize:
-        12,
+        10,
 
       color:
         colors.textMuted,
     },
 
-    /*
-     * ============================================
-     * TITLE
-     * ============================================
-     */
-
     title: {
       fontSize:
         21,
-
-      lineHeight:
-        27,
 
       fontWeight:
         '800',
@@ -1779,40 +2335,73 @@ function createStyles(
         2,
 
       fontSize:
-        10.5,
+        9.5,
 
       color:
         colors.textMuted,
     },
 
+    errorCard: {
+      marginTop:
+        10,
+
+      padding:
+        10,
+
+      flexDirection:
+        'row',
+
+      gap:
+        7,
+
+      alignItems:
+        'center',
+
+      borderRadius:
+        13,
+
+      backgroundColor:
+        '#FFECEF',
+    },
+
+    errorText: {
+      flex:
+        1,
+
+      fontSize:
+        9,
+
+      color:
+        '#D84D60',
+    },
+
     /*
-     * ============================================
      * SEMESTER
-     * ============================================
      */
 
     semesterTabs: {
       height:
-        48,
+        43,
 
       marginTop:
-        17,
+        15,
 
       padding:
-        4,
+        3,
 
       flexDirection:
         'row',
 
       borderRadius:
-        16,
+        14,
 
       backgroundColor:
         colors.surfaceSecondary,
     },
 
-    semesterTab: {
-      flex: 1,
+    semesterButton: {
+      flex:
+        1,
 
       alignItems:
         'center',
@@ -1820,38 +2409,18 @@ function createStyles(
       justifyContent:
         'center',
 
-      paddingHorizontal:
-        4,
-
       borderRadius:
-        13,
+        11,
     },
 
-    semesterTabActive: {
+    semesterButtonActive: {
       backgroundColor:
         colors.primary,
-
-      shadowColor:
-        colors.primary,
-
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-
-      shadowOpacity:
-        0.18,
-
-      shadowRadius:
-        8,
-
-      elevation:
-        3,
     },
 
-    semesterTabText: {
+    semesterText: {
       fontSize:
-        10.5,
+        8.5,
 
       fontWeight:
         '600',
@@ -1860,7 +2429,7 @@ function createStyles(
         colors.textMuted,
     },
 
-    semesterTabTextActive: {
+    semesterTextActive: {
       color:
         '#FFFFFF',
 
@@ -1869,17 +2438,15 @@ function createStyles(
     },
 
     /*
-     * ============================================
-     * SECTION
-     * ============================================
+     * ASSESSMENT
      */
 
-    sectionRow: {
+    sectionHeader: {
       marginTop:
-        18,
+        15,
 
       marginBottom:
-        9,
+        8,
 
       flexDirection:
         'row',
@@ -1893,7 +2460,7 @@ function createStyles(
 
     sectionTitle: {
       fontSize:
-        13,
+        11,
 
       fontWeight:
         '700',
@@ -1902,36 +2469,37 @@ function createStyles(
         colors.text,
     },
 
-    sectionHint: {
+    sectionSmall: {
       fontSize:
-        9.5,
+        7,
 
       color:
         colors.textMuted,
     },
 
-    /*
-     * ============================================
-     * ASSESSMENT PICKER
-     * ============================================
-     */
-
-    assessmentTabs: {
+    assessmentGrid: {
       flexDirection:
         'row',
 
       gap:
-        7,
+        5,
     },
 
     assessmentButton: {
-      flex: 1,
+      flex:
+        1,
 
       minHeight:
-        51,
+        43,
+
+      paddingHorizontal:
+        4,
 
       flexDirection:
         'row',
+
+      gap:
+        3,
 
       alignItems:
         'center',
@@ -1939,14 +2507,8 @@ function createStyles(
       justifyContent:
         'center',
 
-      gap:
-        5,
-
-      paddingHorizontal:
-        6,
-
       borderRadius:
-        15,
+        12,
 
       borderWidth:
         1,
@@ -1968,10 +2530,10 @@ function createStyles(
 
     assessmentText: {
       fontSize:
-        10.5,
+        7.5,
 
       fontWeight:
-        '600',
+        '700',
 
       color:
         colors.textSecondary,
@@ -1980,573 +2542,18 @@ function createStyles(
     assessmentTextActive: {
       color:
         '#FFFFFF',
-
-      fontWeight:
-        '700',
-    },
-
-    assessmentIconColor: {
-      color:
-        colors.primary,
     },
 
     /*
-     * ============================================
-     * FINAL RESULT INFO
-     * ============================================
+     * LOCKED
      */
 
-    finalInfo: {
-      minHeight:
-        65,
-
+    lockedCard: {
       marginTop:
-        17,
+        15,
 
-      paddingHorizontal:
-        13,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      borderRadius:
-        17,
-
-      borderWidth:
-        1,
-
-      borderColor:
-        colors.border,
-
-      backgroundColor:
-        colors.card,
-    },
-
-    finalInfoIcon: {
-      width:
-        40,
-
-      height:
-        40,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        13,
-
-      backgroundColor:
-        colors.primarySoft,
-    },
-
-    finalInfoText: {
-      flex: 1,
-
-      marginLeft:
-        10,
-    },
-
-    finalInfoTitle: {
-      fontSize:
-        12.5,
-
-      fontWeight:
-        '700',
-
-      color:
-        colors.text,
-    },
-
-    finalInfoSubtitle: {
-      marginTop:
-        2,
-
-      fontSize:
-        9.5,
-
-      color:
-        colors.textMuted,
-    },
-
-    /*
-     * ============================================
-     * SUBJECT HEADER
-     * ============================================
-     */
-
-    subjectHeader: {
-      marginTop:
-        21,
-
-      marginBottom:
-        10,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'space-between',
-    },
-
-    subjectHeaderTitle: {
-      fontSize:
-        14,
-
-      fontWeight:
-        '700',
-
-      color:
-        colors.text,
-    },
-
-    subjectHeaderSub: {
-      marginTop:
-        2,
-
-      fontSize:
-        9.5,
-
-      color:
-        colors.textMuted,
-    },
-
-    maxBadge: {
-      minWidth:
-        42,
-
-      height:
-        27,
-
-      paddingHorizontal:
-        9,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        10,
-
-      backgroundColor:
-        colors.primarySoft,
-    },
-
-    maxBadgeText: {
-      fontSize:
-        10,
-
-      fontWeight:
-        '700',
-
-      color:
-        colors.primary,
-    },
-
-    /*
-     * ============================================
-     * RESULT CARDS
-     * ============================================
-     */
-
-    resultList: {
-      gap:
-        7,
-    },
-
-    resultCard: {
-      minHeight:
-        66,
-
-      paddingHorizontal:
-        10,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      borderRadius:
-        17,
-
-      borderWidth:
-        1,
-
-      borderColor:
-        colors.border,
-
-      backgroundColor:
-        colors.card,
-    },
-
-    subjectIcon: {
-      width:
-        40,
-
-      height:
-        40,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        13,
-
-      backgroundColor:
-        colors.primarySoft,
-    },
-
-    subjectInfo: {
-      flex: 1,
-
-      minWidth:
-        0,
-
-      marginLeft:
-        10,
-    },
-
-    subjectName: {
-      fontSize:
-        12,
-
-      fontWeight:
-        '700',
-
-      color:
-        colors.text,
-    },
-
-    subjectStatus: {
-      marginTop:
-        3,
-
-      fontSize:
-        8.8,
-
-      color:
-        colors.textMuted,
-    },
-
-    scoreArea: {
-      minWidth:
-        48,
-
-      marginLeft:
-        6,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'baseline',
-
-      justifyContent:
-        'flex-end',
-    },
-
-    scoreText: {
-      fontSize:
-        16,
-
-      fontWeight:
-        '800',
-
-      color:
-        colors.text,
-    },
-
-    emptyScore: {
-      color:
-        colors.textMuted,
-    },
-
-    scoreMax: {
-      marginLeft:
-        1,
-
-      fontSize:
-        8,
-
-      color:
-        colors.textMuted,
-    },
-
-    gradeBadge: {
-      minWidth:
-        38,
-
-      height:
-        38,
-
-      marginLeft:
-        7,
-
-      paddingHorizontal:
-        6,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        12,
-
-      backgroundColor:
-        '#E3F8EF',
-    },
-
-    gradeText: {
-      fontSize:
-        12,
-
-      fontWeight:
-        '800',
-
-      color:
-        '#158B68',
-    },
-
-    emptyGrade: {
-      backgroundColor:
-        colors.surfaceSecondary,
-    },
-
-    emptyGradeText: {
-      color:
-        colors.textMuted,
-    },
-
-    /*
-     * ============================================
-     * OVERALL
-     * ============================================
-     */
-
-    overallCard: {
-      minHeight:
-        76,
-
-      marginTop:
-        14,
-
-      paddingHorizontal:
-        11,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      borderRadius:
-        18,
-
-      borderWidth:
-        1,
-
-      borderColor:
-        colors.border,
-
-      backgroundColor:
-        colors.card,
-    },
-
-    overallIcon: {
-      width:
-        42,
-
-      height:
-        42,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        13,
-
-      backgroundColor:
-        colors.primarySoft,
-    },
-
-    overallInfo: {
-      flex: 1,
-
-      marginLeft:
-        10,
-    },
-
-    overallLabel: {
-      fontSize:
-        11.5,
-
-      fontWeight:
-        '700',
-
-      color:
-        colors.text,
-    },
-
-    overallSmall: {
-      marginTop:
-        2,
-
-      fontSize:
-        8.8,
-
-      color:
-        colors.textMuted,
-    },
-
-    overallScore: {
-      marginRight:
-        8,
-    },
-
-    overallScoreText: {
-      fontSize:
-        16,
-
-      fontWeight:
-        '800',
-
-      color:
-        colors.text,
-    },
-
-    overallGrade: {
-      minWidth:
-        40,
-
-      height:
-        40,
-
-      paddingHorizontal:
-        6,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        13,
-
-      backgroundColor:
-        '#E3F8EF',
-    },
-
-    overallGradeText: {
-      fontSize:
-        12.5,
-
-      fontWeight:
-        '800',
-
-      color:
-        '#158B68',
-    },
-
-    /*
-     * ============================================
-     * INFO
-     * ============================================
-     */
-
-    infoCard: {
-      minHeight:
-        59,
-
-      marginTop:
-        11,
-
-      paddingHorizontal:
-        11,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      borderRadius:
-        17,
-
-      borderWidth:
-        1,
-
-      borderColor:
-        colors.border,
-
-      backgroundColor:
-        colors.card,
-    },
-
-    infoIcon: {
-      width:
-        36,
-
-      height:
-        36,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderRadius:
-        12,
-
-      backgroundColor:
-        colors.primarySoft,
-    },
-
-    infoText: {
-      flex: 1,
-
-      marginLeft:
-        9,
-
-      fontSize:
-        9.5,
-
-      lineHeight:
-        14,
-
-      color:
-        colors.textMuted,
-    },
-
-    /*
-     * ============================================
-     * EMPTY / ERROR
-     * ============================================
-     */
-
-    emptyCard: {
       paddingVertical:
-        36,
+        30,
 
       paddingHorizontal:
         20,
@@ -2567,12 +2574,12 @@ function createStyles(
         colors.card,
     },
 
-    emptyIcon: {
+    lockedIcon: {
       width:
-        52,
+        46,
 
       height:
-        52,
+        46,
 
       alignItems:
         'center',
@@ -2581,18 +2588,325 @@ function createStyles(
         'center',
 
       borderRadius:
-        17,
+        15,
 
       backgroundColor:
         colors.primarySoft,
     },
 
-    emptyTitle: {
+    lockedTitle: {
       marginTop:
-        11,
+        10,
 
       fontSize:
+        12,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.text,
+    },
+
+    lockedText: {
+      marginTop:
+        4,
+
+      maxWidth:
+        220,
+
+      textAlign:
+        'center',
+
+      fontSize:
+        8.5,
+
+      lineHeight:
         13,
+
+      color:
+        colors.textMuted,
+    },
+
+    /*
+     * RANK
+     */
+
+    rankCard: {
+      minHeight:
+        76,
+
+      marginTop:
+        14,
+
+      paddingHorizontal:
+        10,
+
+      flexDirection:
+        'row',
+
+      alignItems:
+        'center',
+
+      borderRadius:
+        16,
+
+      borderWidth:
+        1,
+
+      borderColor:
+        colors.border,
+
+      backgroundColor:
+        colors.card,
+    },
+
+    rankIcon: {
+      width:
+        42,
+
+      height:
+        42,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        13,
+
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    rankInfo: {
+      flex:
+        1,
+
+      marginLeft:
+        9,
+    },
+
+    rankTitle: {
+      fontSize:
+        11.5,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.text,
+    },
+
+    rankSubtitle: {
+      marginTop:
+        2,
+
+      fontSize:
+        7.5,
+
+      color:
+        colors.textMuted,
+    },
+
+    rankValueBox: {
+      minWidth:
+        57,
+
+      height:
+        51,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        14,
+
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    rankValue: {
+      fontSize:
+        20,
+
+      lineHeight:
+        22,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.primary,
+    },
+
+    rankOf: {
+      fontSize:
+        6.5,
+
+      color:
+        colors.textMuted,
+    },
+
+    rankEmpty: {
+      fontSize:
+        19,
+
+      color:
+        colors.textMuted,
+    },
+
+    /*
+     * RESULT HEADER
+     */
+
+    resultsHeader: {
+      marginTop:
+        17,
+
+      marginBottom:
+        8,
+
+      flexDirection:
+        'row',
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'space-between',
+    },
+
+    resultsHeaderTitle: {
+      fontSize:
+        12,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.text,
+    },
+
+    resultsHeaderCount: {
+      marginTop:
+        2,
+
+      fontSize:
+        7,
+
+      color:
+        colors.textMuted,
+    },
+
+    maxBadge: {
+      minWidth:
+        38,
+
+      height:
+        25,
+
+      paddingHorizontal:
+        7,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        9,
+
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    maxBadgeText: {
+      fontSize:
+        8,
+
+      fontWeight:
+        '700',
+
+      color:
+        colors.primary,
+    },
+
+    /*
+     * SUBJECTS
+     */
+
+    subjectList: {
+      gap:
+        6,
+    },
+
+    subjectCard: {
+      minHeight:
+        64,
+
+      paddingHorizontal:
+        9,
+
+      flexDirection:
+        'row',
+
+      alignItems:
+        'center',
+
+      borderRadius:
+        15,
+
+      borderWidth:
+        1,
+
+      borderColor:
+        colors.border,
+
+      backgroundColor:
+        colors.card,
+    },
+
+    subjectIcon: {
+      width:
+        38,
+
+      height:
+        38,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        12,
+
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    subjectInfo: {
+      flex:
+        1,
+
+      minWidth:
+        0,
+
+      marginLeft:
+        9,
+    },
+
+    subjectName: {
+      fontSize:
+        10,
 
       fontWeight:
         '700',
@@ -2601,29 +2915,141 @@ function createStyles(
         colors.text,
     },
 
-    emptyText: {
+    subjectSub: {
       marginTop:
-        4,
-
-      textAlign:
-        'center',
+        2,
 
       fontSize:
-        10,
-
-      lineHeight:
-        15,
+        6.8,
 
       color:
         colors.textMuted,
     },
 
-    errorCard: {
+    subjectRank: {
+      marginTop:
+        3,
+
+      flexDirection:
+        'row',
+
+      gap:
+        3,
+
+      alignItems:
+        'center',
+    },
+
+    subjectRankText: {
+      fontSize:
+        6.8,
+
+      fontWeight:
+        '700',
+
+      color:
+        colors.primary,
+    },
+
+    scoreArea: {
+      minWidth:
+        43,
+
+      marginLeft:
+        5,
+
+      flexDirection:
+        'row',
+
+      alignItems:
+        'baseline',
+
+      justifyContent:
+        'flex-end',
+    },
+
+    score: {
+      fontSize:
+        14,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.text,
+    },
+
+    scoreMax: {
+      marginLeft:
+        1,
+
+      fontSize:
+        6.5,
+
+      color:
+        colors.textMuted,
+    },
+
+    gradeBox: {
+      minWidth:
+        34,
+
+      height:
+        34,
+
+      marginLeft:
+        6,
+
+      paddingHorizontal:
+        5,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        11,
+
+      backgroundColor:
+        '#E4F7EE',
+    },
+
+    gradeBoxEmpty: {
+      backgroundColor:
+        colors.surfaceSecondary,
+    },
+
+    gradeText: {
+      fontSize:
+        9,
+
+      fontWeight:
+        '800',
+
+      color:
+        '#198B66',
+    },
+
+    gradeTextEmpty: {
+      color:
+        colors.textMuted,
+    },
+
+    /*
+     * OVERALL
+     */
+
+    overallCard: {
+      minHeight:
+        70,
+
       marginTop:
         12,
 
-      padding:
-        11,
+      paddingHorizontal:
+        10,
 
       flexDirection:
         'row',
@@ -2631,24 +3057,112 @@ function createStyles(
       alignItems:
         'center',
 
-      gap:
-        7,
-
       borderRadius:
-        14,
+        16,
+
+      borderWidth:
+        1,
+
+      borderColor:
+        colors.border,
 
       backgroundColor:
-        '#FFF0F0',
+        colors.card,
     },
 
-    errorText: {
-      flex: 1,
+    overallIcon: {
+      width:
+        39,
 
+      height:
+        39,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        12,
+
+      backgroundColor:
+        colors.primarySoft,
+    },
+
+    overallInfo: {
+      flex:
+        1,
+
+      marginLeft:
+        9,
+    },
+
+    overallTitle: {
       fontSize:
-        10.5,
+        10,
+
+      fontWeight:
+        '700',
 
       color:
-        '#C73C42',
+        colors.text,
+    },
+
+    overallSub: {
+      marginTop:
+        2,
+
+      fontSize:
+        6.8,
+
+      color:
+        colors.textMuted,
+    },
+
+    overallScore: {
+      marginRight:
+        7,
+
+      fontSize:
+        14,
+
+      fontWeight:
+        '800',
+
+      color:
+        colors.text,
+    },
+
+    overallGrade: {
+      minWidth:
+        36,
+
+      height:
+        36,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      borderRadius:
+        11,
+
+      backgroundColor:
+        '#E4F7EE',
+    },
+
+    overallGradeText: {
+      fontSize:
+        9.5,
+
+      fontWeight:
+        '800',
+
+      color:
+        '#198B66',
     },
   });
 }

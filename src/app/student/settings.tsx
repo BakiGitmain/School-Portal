@@ -1,11 +1,7 @@
-import { PlaceholderScreen } from "../../components/common/PlaceholderScreen";
+// src/app/student/settings.tsx
 
-export default function Settings() {
-  return (
-    <PlaceholderScreen
-      title="Settings"
-      description="Manage your application preferences."
-      icon="settings-outline"
-    />
-  );
+import StudentSettingsScreen from '../../features/student/screens/StudentSettingsScreen';
+
+export default function StudentSettings() {
+  return <StudentSettingsScreen />;
 }
