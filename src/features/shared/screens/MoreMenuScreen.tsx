@@ -15,8 +15,8 @@ import {
 } from '@expo/vector-icons';
 
 import {
-  useRouter,
   type Href,
+  useRouter,
 } from 'expo-router';
 
 import {
@@ -29,8 +29,15 @@ type MoreRole =
   | 'student';
 
 type Props = {
-  role: MoreRole;
+  role:
+    MoreRole;
 };
+
+type MenuIcon =
+  | 'calendar-outline'
+  | 'happy-outline'
+  | 'analytics-outline'
+  | 'megaphone-outline';
 
 export default function MoreMenuScreen({
   role,
@@ -75,37 +82,27 @@ export default function MoreMenuScreen({
         false
       }
     >
-      <View
+      <Text
         style={
-          styles.heading
+          styles.title
         }
       >
-        <Text
-          style={
-            styles.title
-          }
-        >
-          School
-        </Text>
+        School
+      </Text>
 
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          School information and useful tools.
-        </Text>
-      </View>
+      <Text
+        style={
+          styles.subtitle
+        }
+      >
+        School information and useful tools.
+      </Text>
 
       <View
         style={
           styles.card
         }
       >
-        {/* ================================================= */}
-        {/* CALENDAR */}
-        {/* ================================================= */}
-
         <MenuItem
           icon="calendar-outline"
           title="School Calendar"
@@ -123,23 +120,19 @@ export default function MoreMenuScreen({
           }
         />
 
-        {/* ================================================= */}
-        {/* TEACHER ONLY */}
-        {/* ================================================= */}
+        <View
+          style={
+            styles.divider
+          }
+        />
 
         {role ===
         'teacher' ? (
           <>
-            <View
-              style={
-                styles.divider
-              }
-            />
-
             <MenuItem
               icon="happy-outline"
               title="Student Behavior"
-              description="Homeroom student behavior records"
+              description="Record and review homeroom student behavior"
               onPress={() =>
                 openPage(
                   'behavior',
@@ -152,16 +145,52 @@ export default function MoreMenuScreen({
                 styles
               }
             />
+
+            <View
+              style={
+                styles.divider
+              }
+            />
+
+            <MenuItem
+              icon="megaphone-outline"
+              title="Send Notice"
+              description="Message your homeroom class or one student"
+              onPress={() =>
+                openPage(
+                  'notice',
+                )
+              }
+              colors={
+                colors
+              }
+              styles={
+                styles
+              }
+            />
           </>
-        ) : null}
+        ) : (
+          <MenuItem
+            icon="analytics-outline"
+            title="My Behavior"
+            description="View your behavior history and progress"
+            onPress={() =>
+              openPage(
+                'behavior',
+              )
+            }
+            colors={
+              colors
+            }
+            styles={
+              styles
+            }
+          />
+        )}
       </View>
     </ScrollView>
   );
 }
-
-/* =========================================================
- * MENU ITEM
- * ======================================================= */
 
 function MenuItem({
   icon,
@@ -172,8 +201,7 @@ function MenuItem({
   styles,
 }: {
   icon:
-    'calendar-outline' |
-    'happy-outline';
+    MenuIcon;
 
   title:
     string;
@@ -215,7 +243,7 @@ function MenuItem({
           name={
             icon
           }
-          size={24}
+          size={25}
           color={
             colors.primary
           }
@@ -246,7 +274,7 @@ function MenuItem({
 
       <Ionicons
         name="chevron-forward"
-        size={20}
+        size={21}
         color={
           colors.textMuted
         }
@@ -255,67 +283,73 @@ function MenuItem({
   );
 }
 
-/* =========================================================
- * STYLES
- * ======================================================= */
-
 function createStyles(
   colors:
     AppThemeColors,
 ) {
   return StyleSheet.create({
     screen: {
-      flex: 1,
+      flex:
+        1,
 
       backgroundColor:
         colors.background,
     },
 
     content: {
-      paddingHorizontal: 16,
+      paddingHorizontal:
+        16,
 
-      paddingTop: 18,
+      paddingTop:
+        20,
 
-      paddingBottom: 130,
-    },
-
-    heading: {
-      marginBottom: 15,
+      paddingBottom:
+        130,
     },
 
     title: {
-      fontSize: 21,
-
-      lineHeight: 27,
-
-      fontWeight:
-        '800',
-
       color:
         colors.text,
+
+      fontSize:
+        25,
+
+      lineHeight:
+        31,
+
+      fontWeight:
+        '900',
     },
 
     subtitle: {
-      marginTop: 3,
+      marginTop:
+        5,
 
-      fontSize: 12,
-
-      lineHeight: 17,
-
-      fontWeight:
-        '500',
+      marginBottom:
+        18,
 
       color:
-        colors.textMuted,
+        colors.textSecondary,
+
+      fontSize:
+        14,
+
+      lineHeight:
+        20,
+
+      fontWeight:
+        '600',
     },
 
     card: {
       overflow:
         'hidden',
 
-      borderRadius: 20,
+      borderRadius:
+        21,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
       borderColor:
         colors.border,
@@ -325,9 +359,11 @@ function createStyles(
     },
 
     item: {
-      minHeight: 84,
+      minHeight:
+        94,
 
-      paddingHorizontal: 14,
+      paddingHorizontal:
+        15,
 
       flexDirection:
         'row',
@@ -337,18 +373,22 @@ function createStyles(
     },
 
     itemPressed: {
-      opacity: 0.72,
+      opacity:
+        0.72,
 
       backgroundColor:
         colors.surfaceSecondary,
     },
 
     iconBox: {
-      width: 48,
+      width:
+        52,
 
-      height: 48,
+      height:
+        52,
 
-      borderRadius: 15,
+      borderRadius:
+        17,
 
       alignItems:
         'center',
@@ -361,45 +401,56 @@ function createStyles(
     },
 
     itemContent: {
-      flex: 1,
+      flex:
+        1,
 
-      minWidth: 0,
+      minWidth:
+        0,
 
-      marginLeft: 12,
+      marginLeft:
+        13,
 
-      marginRight: 8,
+      marginRight:
+        8,
     },
 
     itemTitle: {
-      fontSize: 15,
-
-      lineHeight: 20,
-
-      fontWeight:
-        '800',
-
       color:
         colors.text,
+
+      fontSize:
+        17,
+
+      lineHeight:
+        22,
+
+      fontWeight:
+        '900',
     },
 
     itemDescription: {
-      marginTop: 3,
-
-      fontSize: 11,
-
-      lineHeight: 16,
-
-      fontWeight:
-        '500',
+      marginTop:
+        4,
 
       color:
         colors.textMuted,
+
+      fontSize:
+        13,
+
+      lineHeight:
+        18,
+
+      fontWeight:
+        '600',
     },
 
     divider: {
-      height: 1,
+      height:
+        1,
 
-      marginLeft: 74,
+      marginLeft:
+        80,
 
       backgroundColor:
         colors.border,

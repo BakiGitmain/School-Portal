@@ -23,6 +23,28 @@ type Props = {
     UserRole;
 };
 
+function isTeacherFullScreenRoute(
+  routeName:
+    string |
+    undefined,
+) {
+  if (
+    !routeName
+  ) {
+    return false;
+  }
+
+  return (
+    routeName ===
+      'mark-sheet' ||
+    routeName ===
+      'mark-sheet/[id]' ||
+    routeName.startsWith(
+      'mark-sheet/',
+    )
+  );
+}
+
 export function RoleTabsLayout({
   role,
 }: Props) {
@@ -58,12 +80,6 @@ export function RoleTabsLayout({
       'fade' as const,
   };
 
-  /*
-   * =====================================================
-   * PRESIDENT / ADMIN
-   * =====================================================
-   */
-
   if (
     role ===
     'admin'
@@ -73,15 +89,13 @@ export function RoleTabsLayout({
         screenOptions={
           commonOptions
         }
-        tabBar={(props) => (
+        tabBar={props => (
           <AnimatedTabBar
             {...props}
             role="admin"
           />
         )}
       >
-        {/* Hidden profile page */}
-
         <Tabs.Screen
           name="profile"
           options={{
@@ -90,8 +104,6 @@ export function RoleTabsLayout({
           }}
         />
 
-        {/* Hidden settings page */}
-
         <Tabs.Screen
           name="settings"
           options={{
@@ -99,8 +111,6 @@ export function RoleTabsLayout({
               null,
           }}
         />
-
-        {/* Teacher route/folder */}
 
         <Tabs.Screen
           name="teacher"
@@ -113,8 +123,6 @@ export function RoleTabsLayout({
           }}
         />
 
-        {/* Class details */}
-
         <Tabs.Screen
           name="class/[id]"
           options={{
@@ -126,8 +134,6 @@ export function RoleTabsLayout({
           }}
         />
 
-        {/* Student details */}
-
         <Tabs.Screen
           name="student/[id]"
           options={{
@@ -141,12 +147,6 @@ export function RoleTabsLayout({
       </Tabs>
     );
   }
-
-  /*
-   * =====================================================
-   * TEACHER
-   * =====================================================
-   */
 
   if (
     role ===
@@ -157,15 +157,28 @@ export function RoleTabsLayout({
         screenOptions={
           commonOptions
         }
-        tabBar={(props) => (
-          <AnimatedTabBar
-            {...props}
-            role="teacher"
-          />
-        )}
-      >
-        {/* Hidden profile */}
+        tabBar={props => {
+          const currentRoute =
+            props.state.routes[
+              props.state.index
+            ];
 
+          if (
+            isTeacherFullScreenRoute(
+              currentRoute?.name,
+            )
+          ) {
+            return null;
+          }
+
+          return (
+            <AnimatedTabBar
+              {...props}
+              role="teacher"
+            />
+          );
+        }}
+      >
         <Tabs.Screen
           name="profile"
           options={{
@@ -173,8 +186,6 @@ export function RoleTabsLayout({
               null,
           }}
         />
-
-        {/* Hidden settings */}
 
         <Tabs.Screen
           name="settings"
@@ -184,10 +195,19 @@ export function RoleTabsLayout({
           }}
         />
 
-        {/* Student details */}
-
         <Tabs.Screen
           name="student/[id]"
+          options={{
+            href:
+              null,
+
+            headerShown:
+              false,
+          }}
+        />
+
+        <Tabs.Screen
+          name="mark-sheet/[id]"
           options={{
             href:
               null,
@@ -200,18 +220,12 @@ export function RoleTabsLayout({
     );
   }
 
-  /*
-   * =====================================================
-   * STUDENT
-   * =====================================================
-   */
-
   return (
     <Tabs
       screenOptions={
         commonOptions
       }
-      tabBar={(props) => (
+      tabBar={props => (
         <AnimatedTabBar
           {...props}
           role="student"

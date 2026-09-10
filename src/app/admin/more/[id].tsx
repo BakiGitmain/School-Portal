@@ -18,6 +18,8 @@ import {
 
 import SchoolCalendarScreen from '../../../features/admin/screens/SchoolCalendarScreen';
 
+import NotificationComposerScreen from '../../../features/shared/screens/NotificationComposerScreen';
+
 import {
   useAppSettings,
 } from '../../../context/AppSettingsContext';
@@ -45,30 +47,43 @@ export default function AdminMoreDetail() {
       ? params.id[0]
       : params.id;
 
-  /*
-   * =====================================================
+  /* =====================================================
    * SCHOOL CALENDAR
-   * =====================================================
-   */
+   * =================================================== */
 
   if (
-    id === 'calendar'
+    id ===
+    'calendar'
   ) {
     return (
       <SchoolCalendarScreen />
     );
   }
 
-  /*
-   * =====================================================
-   * UNKNOWN MORE PAGE
-   * =====================================================
-   */
+  /* =====================================================
+   * PRESIDENT ANNOUNCEMENTS
+   * =================================================== */
+
+  if (
+    id ===
+    'announcements'
+  ) {
+    return (
+      <NotificationComposerScreen
+        role="admin"
+      />
+    );
+  }
+
+  /* =====================================================
+   * UNKNOWN PAGE
+   * =================================================== */
 
   return (
     <View
       style={[
         styles.screen,
+
         {
           backgroundColor:
             colors.background,
@@ -78,6 +93,7 @@ export default function AdminMoreDetail() {
       <View
         style={[
           styles.iconBox,
+
           {
             backgroundColor:
               colors.primarySoft,
@@ -86,7 +102,7 @@ export default function AdminMoreDetail() {
       >
         <Ionicons
           name="apps-outline"
-          size={28}
+          size={30}
           color={
             colors.primary
           }
@@ -96,6 +112,7 @@ export default function AdminMoreDetail() {
       <Text
         style={[
           styles.title,
+
           {
             color:
               colors.text,
@@ -108,30 +125,35 @@ export default function AdminMoreDetail() {
       <Text
         style={[
           styles.description,
+
           {
             color:
               colors.textMuted,
           },
         ]}
       >
-        This section is not available yet.
+        This section is not available.
       </Text>
 
       <Pressable
         onPress={() =>
           router.back()
         }
-        style={[
+        style={({ pressed }) => [
           styles.button,
+
           {
             backgroundColor:
               colors.primary,
           },
+
+          pressed &&
+            styles.buttonPressed,
         ]}
       >
         <Ionicons
           name="arrow-back"
-          size={18}
+          size={19}
           color="#FFFFFF"
         />
 
@@ -152,7 +174,8 @@ const styles =
     screen: {
       flex: 1,
 
-      paddingHorizontal: 24,
+      paddingHorizontal:
+        24,
 
       alignItems:
         'center',
@@ -162,11 +185,14 @@ const styles =
     },
 
     iconBox: {
-      width: 60,
+      width:
+        64,
 
-      height: 60,
+      height:
+        64,
 
-      borderRadius: 18,
+      borderRadius:
+        20,
 
       alignItems:
         'center',
@@ -176,34 +202,48 @@ const styles =
     },
 
     title: {
-      marginTop: 14,
+      marginTop:
+        16,
 
-      fontSize: 19,
+      fontSize:
+        21,
+
+      lineHeight:
+        27,
 
       fontWeight:
-        '800',
+        '900',
     },
 
     description: {
-      marginTop: 5,
+      marginTop:
+        6,
 
-      fontSize: 13,
+      fontSize:
+        14,
+
+      lineHeight:
+        20,
+
+      fontWeight:
+        '600',
 
       textAlign:
         'center',
     },
 
     button: {
-      height: 46,
+      height:
+        48,
 
-      marginTop: 18,
+      marginTop:
+        20,
 
-      paddingHorizontal: 17,
+      paddingHorizontal:
+        18,
 
       flexDirection:
         'row',
-
-      gap: 7,
 
       alignItems:
         'center',
@@ -211,16 +251,26 @@ const styles =
       justifyContent:
         'center',
 
-      borderRadius: 14,
+      gap:
+        8,
+
+      borderRadius:
+        15,
+    },
+
+    buttonPressed: {
+      opacity:
+        0.7,
     },
 
     buttonText: {
       color:
         '#FFFFFF',
 
-      fontSize: 13,
+      fontSize:
+        14,
 
       fontWeight:
-        '800',
+        '900',
     },
   });

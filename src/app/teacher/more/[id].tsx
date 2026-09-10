@@ -18,6 +18,8 @@ import {
 
 import SchoolCalendarViewerScreen from '../../../features/shared/screens/SchoolCalendarViewerScreen';
 
+import NotificationComposerScreen from '../../../features/shared/screens/NotificationComposerScreen';
+
 import HomeroomBehaviorScreen from '../../../features/teacher/screens/HomeroomBehaviorScreen';
 
 import {
@@ -36,7 +38,7 @@ export default function TeacherMoreDetail() {
   const params =
     useLocalSearchParams<{
       id?:
-        | string
+        string
         | string[];
     }>();
 
@@ -47,10 +49,6 @@ export default function TeacherMoreDetail() {
       ? params.id[0]
       : params.id;
 
-  /*
-   * SCHOOL CALENDAR
-   */
-
   if (
     id ===
     'calendar'
@@ -59,10 +57,6 @@ export default function TeacherMoreDetail() {
       <SchoolCalendarViewerScreen />
     );
   }
-
-  /*
-   * STUDENT BEHAVIOR
-   */
 
   if (
     id ===
@@ -73,9 +67,16 @@ export default function TeacherMoreDetail() {
     );
   }
 
-  /*
-   * UNKNOWN PAGE
-   */
+  if (
+    id ===
+    'notice'
+  ) {
+    return (
+      <NotificationComposerScreen
+        role="teacher"
+      />
+    );
+  }
 
   return (
     <View
@@ -88,24 +89,13 @@ export default function TeacherMoreDetail() {
         },
       ]}
     >
-      <View
-        style={[
-          styles.icon,
-
-          {
-            backgroundColor:
-              colors.primarySoft,
-          },
-        ]}
-      >
-        <Ionicons
-          name="apps-outline"
-          size={28}
-          color={
-            colors.primary
-          }
-        />
-      </View>
+      <Ionicons
+        name="alert-circle-outline"
+        size={36}
+        color={
+          colors.primary
+        }
+      />
 
       <Text
         style={[
@@ -133,18 +123,12 @@ export default function TeacherMoreDetail() {
           },
         ]}
       >
-        <Ionicons
-          name="arrow-back"
-          size={18}
-          color="#FFFFFF"
-        />
-
         <Text
           style={
             styles.buttonText
           }
         >
-          Back
+          Go Back
         </Text>
       </Pressable>
     </View>
@@ -154,23 +138,11 @@ export default function TeacherMoreDetail() {
 const styles =
   StyleSheet.create({
     screen: {
-      flex: 1,
+      flex:
+        1,
 
-      paddingHorizontal: 24,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-    },
-
-    icon: {
-      width: 58,
-
-      height: 58,
-
-      borderRadius: 18,
+      padding:
+        24,
 
       alignItems:
         'center',
@@ -180,25 +152,25 @@ const styles =
     },
 
     title: {
-      marginTop: 12,
+      marginTop:
+        12,
 
-      fontSize: 18,
+      fontSize:
+        20,
 
       fontWeight:
-        '800',
+        '900',
     },
 
     button: {
-      height: 44,
+      height:
+        46,
 
-      marginTop: 16,
+      marginTop:
+        18,
 
-      paddingHorizontal: 16,
-
-      borderRadius: 13,
-
-      flexDirection:
-        'row',
+      paddingHorizontal:
+        18,
 
       alignItems:
         'center',
@@ -206,16 +178,18 @@ const styles =
       justifyContent:
         'center',
 
-      gap: 6,
+      borderRadius:
+        14,
     },
 
     buttonText: {
       color:
         '#FFFFFF',
 
-      fontSize: 12,
+      fontSize:
+        14,
 
       fontWeight:
-        '800',
+        '900',
     },
   });

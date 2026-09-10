@@ -16,15 +16,15 @@ import {
   useRouter,
 } from 'expo-router';
 
-import SchoolCalendarViewerScreen from '../../../features/shared/screens/SchoolCalendarViewerScreen';
+import SchoolCalendarScreen from '../../../features/admin/screens/SchoolCalendarScreen';
 
-import StudentBehaviorScreen from '../../../features/student/screens/StudentBehaviorScreen';
+import NotificationComposerScreen from '../../../features/shared/screens/NotificationComposerScreen';
 
 import {
   useAppSettings,
 } from '../../../context/AppSettingsContext';
 
-export default function StudentMoreDetail() {
+export default function AdminMoreDetail() {
   const router =
     useRouter();
 
@@ -36,7 +36,7 @@ export default function StudentMoreDetail() {
   const params =
     useLocalSearchParams<{
       id?:
-        | string
+        string
         | string[];
     }>();
 
@@ -47,41 +47,25 @@ export default function StudentMoreDetail() {
       ? params.id[0]
       : params.id;
 
-  /*
-   * =====================================================
-   * CALENDAR
-   * =====================================================
-   */
-
   if (
     id ===
     'calendar'
   ) {
     return (
-      <SchoolCalendarViewerScreen />
+      <SchoolCalendarScreen />
     );
   }
-
-  /*
-   * =====================================================
-   * BEHAVIOR
-   * =====================================================
-   */
 
   if (
     id ===
-    'behavior'
+    'announcements'
   ) {
     return (
-      <StudentBehaviorScreen />
+      <NotificationComposerScreen
+        role="admin"
+      />
     );
   }
-
-  /*
-   * =====================================================
-   * NOT FOUND
-   * =====================================================
-   */
 
   return (
     <View
@@ -94,24 +78,13 @@ export default function StudentMoreDetail() {
         },
       ]}
     >
-      <View
-        style={[
-          styles.icon,
-
-          {
-            backgroundColor:
-              colors.primarySoft,
-          },
-        ]}
-      >
-        <Ionicons
-          name="apps-outline"
-          size={28}
-          color={
-            colors.primary
-          }
-        />
-      </View>
+      <Ionicons
+        name="alert-circle-outline"
+        size={36}
+        color={
+          colors.primary
+        }
+      />
 
       <Text
         style={[
@@ -139,18 +112,12 @@ export default function StudentMoreDetail() {
           },
         ]}
       >
-        <Ionicons
-          name="arrow-back"
-          size={18}
-          color="#FFFFFF"
-        />
-
         <Text
           style={
             styles.buttonText
           }
         >
-          Back
+          Go Back
         </Text>
       </Pressable>
     </View>
@@ -160,23 +127,11 @@ export default function StudentMoreDetail() {
 const styles =
   StyleSheet.create({
     screen: {
-      flex: 1,
+      flex:
+        1,
 
-      paddingHorizontal: 24,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-    },
-
-    icon: {
-      width: 58,
-
-      height: 58,
-
-      borderRadius: 18,
+      padding:
+        24,
 
       alignItems:
         'center',
@@ -186,25 +141,25 @@ const styles =
     },
 
     title: {
-      marginTop: 12,
+      marginTop:
+        12,
 
-      fontSize: 18,
+      fontSize:
+        20,
 
       fontWeight:
-        '800',
+        '900',
     },
 
     button: {
-      height: 44,
+      height:
+        46,
 
-      marginTop: 16,
+      marginTop:
+        18,
 
-      paddingHorizontal: 16,
-
-      borderRadius: 13,
-
-      flexDirection:
-        'row',
+      paddingHorizontal:
+        18,
 
       alignItems:
         'center',
@@ -212,16 +167,18 @@ const styles =
       justifyContent:
         'center',
 
-      gap: 6,
+      borderRadius:
+        14,
     },
 
     buttonText: {
       color:
         '#FFFFFF',
 
-      fontSize: 12,
+      fontSize:
+        14,
 
       fontWeight:
-        '800',
+        '900',
     },
   });

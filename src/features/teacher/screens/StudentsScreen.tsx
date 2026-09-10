@@ -31,6 +31,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -309,6 +310,297 @@ export default function StudentsScreen() {
     colors,
   } =
     useAppSettings();
+
+  const {
+    width: screenWidth,
+    height: screenHeight,
+  } =
+    useWindowDimensions();
+
+  /*
+   * Responsive form sizing.
+   *
+   * The Add/Edit Student modal used fixed sizes before.
+   * That made a large iPhone render the form much bigger
+   * than a smaller Android device.
+   *
+   * We keep the same design, but:
+   * - cap the form width on large phones/tablets
+   * - compact large phones slightly
+   * - compact short screens
+   * - stack 2-column controls only on very narrow devices
+   */
+  const formLayout =
+    useMemo(() => {
+      const isVeryNarrow =
+        screenWidth < 350;
+
+      const isLargePhone =
+        screenWidth >= 410 &&
+        screenWidth < 700;
+
+      const isTablet =
+        screenWidth >= 700;
+
+      const isShort =
+        screenHeight < 760;
+
+      const scale =
+        isTablet
+          ? 1
+          : Math.min(
+              isLargePhone
+                ? 0.9
+                : 1,
+              isShort
+                ? 0.92
+                : 1,
+            );
+
+      const formMaxWidth =
+        isTablet
+          ? 540
+          : 410;
+
+      const avatarSize =
+        Math.round(
+          92 * scale,
+        );
+
+      const inputHeight =
+        Math.round(
+          48 * scale,
+        );
+
+      const controlHeight =
+        Math.round(
+          46 * scale,
+        );
+
+      return {
+        isVeryNarrow,
+
+        modalHeader: {
+          minHeight:
+            Math.round(
+              58 * scale,
+            ),
+
+          paddingHorizontal:
+            Math.round(
+              14 * scale,
+            ),
+        },
+
+        formContent: {
+          width:
+            '100%' as const,
+
+          maxWidth:
+            formMaxWidth,
+
+          alignSelf:
+            'center' as const,
+
+          paddingHorizontal:
+            Math.round(
+              16 * scale,
+            ),
+
+          paddingTop:
+            Math.round(
+              16 * scale,
+            ),
+
+          paddingBottom:
+            Math.round(
+              38 * scale,
+            ),
+        },
+
+        formAvatar: {
+          width:
+            avatarSize,
+
+          height:
+            avatarSize,
+
+          borderRadius:
+            avatarSize / 2,
+        },
+
+        photoButtons: {
+          marginTop:
+            Math.round(
+              11 * scale,
+            ),
+
+          marginBottom:
+            Math.round(
+              15 * scale,
+            ),
+
+          flexDirection:
+            isVeryNarrow
+              ? 'column' as const
+              : 'row' as const,
+
+          gap:
+            Math.round(
+              8 * scale,
+            ),
+        },
+
+        photoButton: {
+          minHeight:
+            controlHeight,
+
+          width:
+            isVeryNarrow
+              ? '100%' as const
+              : undefined,
+
+          flex:
+            isVeryNarrow
+              ? 0
+              : 1,
+        },
+
+        idPreview: {
+          minHeight:
+            Math.round(
+              58 * scale,
+            ),
+
+          marginBottom:
+            Math.round(
+              15 * scale,
+            ),
+
+          paddingHorizontal:
+            Math.round(
+              13 * scale,
+            ),
+        },
+
+        twoColumns: {
+          flexDirection:
+            isVeryNarrow
+              ? 'column' as const
+              : 'row' as const,
+
+          gap:
+            isVeryNarrow
+              ? 0
+              : Math.round(
+                  9 * scale,
+                ),
+        },
+
+        column: {
+          width:
+            isVeryNarrow
+              ? '100%' as const
+              : undefined,
+        },
+
+        input: {
+          minHeight:
+            inputHeight,
+
+          marginBottom:
+            Math.round(
+              13 * scale,
+            ),
+
+          paddingHorizontal:
+            Math.round(
+              12 * scale,
+            ),
+        },
+
+        largeInput: {
+          minHeight:
+            Math.round(
+              82 * scale,
+            ),
+
+          paddingTop:
+            Math.round(
+              11 * scale,
+            ),
+        },
+
+        genderRow: {
+          gap:
+            Math.round(
+              8 * scale,
+            ),
+
+          marginBottom:
+            Math.round(
+              13 * scale,
+            ),
+
+          flexDirection:
+            isVeryNarrow
+              ? 'column' as const
+              : 'row' as const,
+        },
+
+        genderButton: {
+          height:
+            controlHeight,
+
+          width:
+            isVeryNarrow
+              ? '100%' as const
+              : undefined,
+
+          flex:
+            isVeryNarrow
+              ? 0
+              : 1,
+        },
+
+        sectionDivider: {
+          marginVertical:
+            Math.round(
+              17 * scale,
+            ),
+        },
+
+        passwordChoice: {
+          minHeight:
+            inputHeight,
+
+          marginBottom:
+            Math.round(
+              8 * scale,
+            ),
+
+          paddingHorizontal:
+            Math.round(
+              12 * scale,
+            ),
+        },
+
+        saveButton: {
+          height:
+            Math.round(
+              50 * scale,
+            ),
+
+          marginTop:
+            Math.round(
+              15 * scale,
+            ),
+        },
+      };
+    }, [
+      screenHeight,
+      screenWidth,
+    ]);
 
   const [
     schoolClass,
@@ -2314,6 +2606,7 @@ function renderStudent(
             <View
               style={[
                 styles.modalHeader,
+                formLayout.modalHeader,
                 {
                   borderBottomColor:
                     colors.border,
@@ -2345,6 +2638,7 @@ function renderStudent(
               </Pressable>
 
               <Text
+                maxFontSizeMultiplier={1.15}
                 style={[
                   styles.modalTitle,
                   {
@@ -2371,21 +2665,24 @@ function renderStudent(
                 false
               }
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={
-                styles.formContent
-              }
+              contentContainerStyle={[
+                styles.formContent,
+                formLayout.formContent,
+              ]}
             >
               <Image
                 source={{
                   uri:
                     avatarPreview,
                 }}
-                style={
-                  styles.formAvatar
-                }
+                style={[
+                  styles.formAvatar,
+                  formLayout.formAvatar,
+                ]}
               />
 
               <Text
+                maxFontSizeMultiplier={1.15}
                 style={[
                   styles.photoHelper,
                   {
@@ -2401,9 +2698,10 @@ function renderStudent(
               </Text>
 
               <View
-                style={
-                  styles.photoButtons
-                }
+                style={[
+                  styles.photoButtons,
+                  formLayout.photoButtons,
+                ]}
               >
                 <Pressable
                   onPress={
@@ -2411,6 +2709,7 @@ function renderStudent(
                   }
                   style={[
                     styles.photoButton,
+                    formLayout.photoButton,
                     {
                       backgroundColor:
                         colors.card,
@@ -2429,6 +2728,7 @@ function renderStudent(
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.photoButtonText,
                       {
@@ -2447,6 +2747,7 @@ function renderStudent(
                   }
                   style={[
                     styles.photoButton,
+                    formLayout.photoButton,
                     {
                       backgroundColor:
                         colors.card,
@@ -2465,6 +2766,7 @@ function renderStudent(
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.photoButtonText,
                       {
@@ -2481,6 +2783,7 @@ function renderStudent(
               <View
                 style={[
                   styles.idPreview,
+                  formLayout.idPreview,
                   {
                     backgroundColor:
                       colors.primarySoft,
@@ -2489,6 +2792,7 @@ function renderStudent(
               >
                 <View>
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.idLabel,
                       {
@@ -2501,6 +2805,7 @@ function renderStudent(
                   </Text>
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.idValue,
                       {
@@ -2517,6 +2822,7 @@ function renderStudent(
 
                 {!editingStudent && (
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.autoText,
                       {
@@ -2531,14 +2837,16 @@ function renderStudent(
               </View>
 
               <View
-                style={
-                  styles.twoColumns
-                }
+                style={[
+                  styles.twoColumns,
+                  formLayout.twoColumns,
+                ]}
               >
                 <View
-                  style={
-                    styles.column
-                  }
+                  style={[
+                    styles.column,
+                    formLayout.column,
+                  ]}
                 >
                   <FieldLabel
                     label="First Name"
@@ -2548,6 +2856,7 @@ function renderStudent(
                   />
 
                   <TextInput
+                    maxFontSizeMultiplier={1.15}
                     value={
                       firstName
                     }
@@ -2560,6 +2869,7 @@ function renderStudent(
                     }
                     style={[
                       styles.input,
+                      formLayout.input,
                       {
                         backgroundColor:
                           colors.input,
@@ -2575,9 +2885,10 @@ function renderStudent(
                 </View>
 
                 <View
-                  style={
-                    styles.column
-                  }
+                  style={[
+                    styles.column,
+                    formLayout.column,
+                  ]}
                 >
                   <FieldLabel
                     label="Last Name"
@@ -2587,6 +2898,7 @@ function renderStudent(
                   />
 
                   <TextInput
+                    maxFontSizeMultiplier={1.15}
                     value={
                       lastName
                     }
@@ -2599,6 +2911,7 @@ function renderStudent(
                     }
                     style={[
                       styles.input,
+                      formLayout.input,
                       {
                         backgroundColor:
                           colors.input,
@@ -2622,9 +2935,10 @@ function renderStudent(
               />
 
               <View
-                style={
-                  styles.genderRow
-                }
+                style={[
+                  styles.genderRow,
+                  formLayout.genderRow,
+                ]}
               >
                 <Pressable
                   onPress={() =>
@@ -2634,6 +2948,7 @@ function renderStudent(
                   }
                   style={[
                     styles.genderButton,
+                    formLayout.genderButton,
                     {
                       backgroundColor:
                         gender ===
@@ -2661,6 +2976,7 @@ function renderStudent(
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.genderText,
                       {
@@ -2684,6 +3000,7 @@ function renderStudent(
                   }
                   style={[
                     styles.genderButton,
+                    formLayout.genderButton,
                     {
                       backgroundColor:
                         gender ===
@@ -2711,6 +3028,7 @@ function renderStudent(
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.genderText,
                       {
@@ -2735,6 +3053,7 @@ function renderStudent(
               />
 
               <TextInput
+                maxFontSizeMultiplier={1.15}
                 value={
                   age
                 }
@@ -2755,6 +3074,7 @@ function renderStudent(
                 }
                 style={[
                   styles.input,
+                  formLayout.input,
                   {
                     backgroundColor:
                       colors.input,
@@ -2776,6 +3096,7 @@ function renderStudent(
               />
 
               <TextInput
+                maxFontSizeMultiplier={1.15}
                 value={
                   motherPhone
                 }
@@ -2789,6 +3110,7 @@ function renderStudent(
                 }
                 style={[
                   styles.input,
+                  formLayout.input,
                   {
                     backgroundColor:
                       colors.input,
@@ -2810,6 +3132,7 @@ function renderStudent(
               />
 
               <TextInput
+                maxFontSizeMultiplier={1.15}
                 value={
                   fatherPhone
                 }
@@ -2823,6 +3146,7 @@ function renderStudent(
                 }
                 style={[
                   styles.input,
+                  formLayout.input,
                   {
                     backgroundColor:
                       colors.input,
@@ -2845,6 +3169,7 @@ function renderStudent(
               />
 
               <TextInput
+                maxFontSizeMultiplier={1.15}
                 value={
                   location
                 }
@@ -2857,6 +3182,7 @@ function renderStudent(
                 }
                 style={[
                   styles.input,
+                  formLayout.input,
                   {
                     backgroundColor:
                       colors.input,
@@ -2879,6 +3205,7 @@ function renderStudent(
               />
 
               <TextInput
+                maxFontSizeMultiplier={1.15}
                 value={
                   specialCase
                 }
@@ -2893,7 +3220,9 @@ function renderStudent(
                 textAlignVertical="top"
                 style={[
                   styles.input,
+                  formLayout.input,
                   styles.largeInput,
+                  formLayout.largeInput,
                   {
                     backgroundColor:
                       colors.input,
@@ -2910,12 +3239,14 @@ function renderStudent(
               {!editingStudent ? (
                 <>
                   <View
-                    style={
-                      styles.sectionDivider
-                    }
+                    style={[
+                      styles.sectionDivider,
+                      formLayout.sectionDivider,
+                    ]}
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.passwordTitle,
                       {
@@ -2928,6 +3259,7 @@ function renderStudent(
                   </Text>
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.passwordDescription,
                       {
@@ -2974,12 +3306,14 @@ function renderStudent(
               ) : (
                 <>
                   <View
-                    style={
-                      styles.sectionDivider
-                    }
+                    style={[
+                      styles.sectionDivider,
+                      formLayout.sectionDivider,
+                    ]}
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.passwordTitle,
                       {
@@ -2992,6 +3326,7 @@ function renderStudent(
                   </Text>
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={[
                       styles.passwordDescription,
                       {
@@ -3066,6 +3401,7 @@ function renderStudent(
                   />
 
                   <Text
+                    maxFontSizeMultiplier={1.15}
                     style={
                       styles.formErrorText
                     }
@@ -3086,6 +3422,7 @@ function renderStudent(
                 }
                 style={[
                   styles.saveButton,
+                  formLayout.saveButton,
                   {
                     backgroundColor:
                       colors.primary,
@@ -3114,6 +3451,7 @@ function renderStudent(
                     />
 
                     <Text
+                      maxFontSizeMultiplier={1.15}
                       style={
                         styles.saveText
                       }
@@ -3407,6 +3745,7 @@ function FieldLabel({
       }
     >
       <Text
+        maxFontSizeMultiplier={1.15}
         style={[
           styles.fieldLabel,
           {
@@ -3419,6 +3758,7 @@ function FieldLabel({
 
       {optional && (
         <Text
+          maxFontSizeMultiplier={1.15}
           style={
             styles.optionalText
           }
@@ -3496,6 +3836,7 @@ function PasswordChoice({
       </View>
 
       <Text
+        maxFontSizeMultiplier={1.15}
         style={[
           styles.passwordChoiceText,
           {

@@ -840,9 +840,15 @@ export default function ClassDetailsScreen({
     student:
       Student,
   ) {
-    router.push(
-      `/admin/student/${student.user_id}` as Href,
-    );
+    router.push({
+      pathname:
+        '/admin/student/[id]',
+
+      params: {
+        id:
+          student.user_id,
+      },
+    });
   }
 
   /*

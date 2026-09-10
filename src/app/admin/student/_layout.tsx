@@ -1,11 +1,13 @@
+import {
+  Stack,
+} from 'expo-router';
 
-import RoleAuthGate from "../../../components/navigation/RoleAuthGate";
-import { RoleTabsLayout } from "../../../components/navigation/RoleTabsLayout";
-
-export default function StudentLayout() {
+export default function AdminStudentLayout() {
   return (
-    <RoleAuthGate role="student">
-      <RoleTabsLayout role="student" />
-    </RoleAuthGate>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
   );
 }

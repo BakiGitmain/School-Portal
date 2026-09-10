@@ -34,6 +34,8 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+import NotificationBell from './NotificationBell';
+
 import {
   supabase,
 } from '../../lib/supabase';
@@ -58,17 +60,9 @@ import type {
   UserRole,
 } from '../../constants/roleNavigation';
 
-/* =========================================================
- * TYPES
- * ======================================================= */
-
 type Props = {
   role: UserRole;
 };
-
-/* =========================================================
- * ROLE NAMES
- * ======================================================= */
 
 const ROLE_NAMES: Record<
   UserRole,
@@ -79,72 +73,34 @@ const ROLE_NAMES: Record<
   student: 'Student',
 };
 
-/* =========================================================
- * HOME TITLES
- * ======================================================= */
-
 const HOME_TITLES: Record<
   UserRole,
   string
 > = {
-  admin:
-    'President Dashboard',
-
-  teacher:
-    'Teacher Dashboard',
-
-  student:
-    'Student Dashboard',
+  admin: 'President Dashboard',
+  teacher: 'Teacher Dashboard',
+  student: 'Student Dashboard',
 };
-
-/* =========================================================
- * PAGE TITLES
- * ======================================================= */
 
 const PAGE_TITLES: Record<
   string,
   string
 > = {
-  teachers:
-    'Teachers',
-
-  classes:
-    'Classes',
-
-  reports:
-    'Reports',
-
-  students:
-    'Students',
-
-  results:
-    'Results',
-
-  attendance:
-    'Attendance',
-
-  announcements:
-    'Announcements',
-
-  more:
-    'More',
-
-  calendar:
-    'School Calendar',
-
-  behavior:
-    'Behavior',
-
-  profile:
-    'Profile',
-
-  settings:
-    'Settings',
+  notifications: 'Notifications',
+  notice: 'Send Notice',
+  teachers: 'Teachers',
+  classes: 'Classes',
+  reports: 'Reports',
+  students: 'Students',
+  results: 'Results',
+  attendance: 'Attendance',
+  announcements: 'Announcements',
+  more: 'More',
+  calendar: 'School Calendar',
+  behavior: 'Behavior',
+  profile: 'Profile',
+  settings: 'Settings',
 };
-
-/* =========================================================
- * PAGE TITLE
- * ======================================================= */
 
 function getPageTitle(
   pathname: string,
@@ -170,48 +126,28 @@ function getPageTitle(
   }
 
   return (
-    PAGE_TITLES[
-      last
-    ] ??
-    HOME_TITLES[
-      role
-    ]
+    PAGE_TITLES[last] ??
+    HOME_TITLES[role]
   );
 }
-
-/* =========================================================
- * ROLE ROUTE
- * ======================================================= */
 
 function getRoleRoute(
   role: UserRole,
 ): Href {
   if (
-    role ===
-    'admin'
+    role === 'admin'
   ) {
-    return (
-      '/admin' as Href
-    );
+    return '/admin' as Href;
   }
 
   if (
-    role ===
-    'teacher'
+    role === 'teacher'
   ) {
-    return (
-      '/teacher' as Href
-    );
+    return '/teacher' as Href;
   }
 
-  return (
-    '/student' as Href
-  );
+  return '/student' as Href;
 }
-
-/* =========================================================
- * HEADER
- * ======================================================= */
 
 export default function AppHeader({
   role,
@@ -226,8 +162,7 @@ export default function AppHeader({
     useSafeAreaInsets();
 
   const {
-    height:
-      windowHeight,
+    height: windowHeight,
   } =
     useWindowDimensions();
 
@@ -288,10 +223,6 @@ export default function AppHeader({
   ] =
     useState('');
 
-  /* =====================================================
-   * PAGE TITLE
-   * =================================================== */
-
   const pageTitle =
     useMemo(
       () =>
@@ -305,15 +236,9 @@ export default function AppHeader({
       ],
     );
 
-  /* =====================================================
-   * DISPLAY NAME
-   * =================================================== */
-
   const displayName =
     profile?.full_name ??
-    ROLE_NAMES[
-      role
-    ];
+    ROLE_NAMES[role];
 
   const initial =
     displayName
@@ -322,13 +247,8 @@ export default function AppHeader({
       .toUpperCase() ||
     'U';
 
-  /* =====================================================
-   * MENU HEIGHT
-   * =================================================== */
-
   const menuTop =
-    insets.top +
-    66;
+    insets.top + 66;
 
   const availableHeight =
     Math.max(
@@ -343,10 +263,6 @@ export default function AppHeader({
       560,
       availableHeight,
     );
-
-  /* =====================================================
-   * LOAD ACCOUNTS WHEN MENU OPENS
-   * =================================================== */
 
   useEffect(
     () => {
@@ -365,17 +281,26 @@ export default function AppHeader({
   );
 
   async function loadAccounts() {
-    const saved =
-      await getSavedAccounts();
+    try {
+      const saved =
+        await getSavedAccounts();
 
-    setAccounts(
-      saved,
-    );
+      setAccounts(
+        saved,
+      );
+    } catch (
+      error
+    ) {
+      console.log(
+        'LOAD ACCOUNTS ERROR:',
+        error,
+      );
+
+      setAccountError(
+        'Saved accounts could not be loaded.',
+      );
+    }
   }
-
-  /* =====================================================
-   * CLOSE MENU
-   * =================================================== */
 
   function closeMenu() {
     setMenuOpen(
@@ -387,39 +312,21 @@ export default function AppHeader({
     );
   }
 
-  /* =====================================================
-   * PROFILE
-   * =================================================== */
-
   function goToProfile() {
     closeMenu();
 
-    const route =
-      `/${role}/profile` as Href;
-
     router.push(
-      route,
+      `/${role}/profile` as Href,
     );
   }
-
-  /* =====================================================
-   * SETTINGS
-   * =================================================== */
 
   function goToSettings() {
     closeMenu();
 
-    const route =
-      `/${role}/settings` as Href;
-
     router.push(
-      route,
+      `/${role}/settings` as Href,
     );
   }
-
-  /* =====================================================
-   * ADD ACCOUNT
-   * =================================================== */
 
   function addAccount() {
     closeMenu();
@@ -429,16 +336,12 @@ export default function AppHeader({
     );
   }
 
-  /* =====================================================
-   * SWITCH ACCOUNT
-   * =================================================== */
-
   async function switchAccount(
-    account:
-      SavedAccount,
+    account: SavedAccount,
   ) {
     if (
       switchingId ||
+      loggingOut ||
       account.userId ===
         profile?.user_id
     ) {
@@ -454,13 +357,13 @@ export default function AppHeader({
         account.userId,
       );
 
-      const session =
+      const savedSession =
         await getSavedSession(
           account.userId,
         );
 
       if (
-        !session
+        !savedSession
       ) {
         await removeSavedAccount(
           account.userId,
@@ -469,28 +372,37 @@ export default function AppHeader({
         await loadAccounts();
 
         setAccountError(
-          'Sign in again.',
+          'This saved account expired. Sign in again.',
         );
 
         return;
       }
 
       const {
+        data:
+          sessionData,
+
         error:
           sessionError,
       } =
         await supabase.auth
           .setSession({
             access_token:
-              session.accessToken,
+              savedSession.accessToken,
 
             refresh_token:
-              session.refreshToken,
+              savedSession.refreshToken,
           });
 
       if (
-        sessionError
+        sessionError ||
+        !sessionData.session
       ) {
+        console.log(
+          'SWITCH SESSION ERROR:',
+          sessionError,
+        );
+
         await removeSavedAccount(
           account.userId,
         );
@@ -498,10 +410,22 @@ export default function AppHeader({
         await loadAccounts();
 
         setAccountError(
-          'Sign in again.',
+          'This saved session expired. Sign in again.',
         );
 
         return;
+      }
+
+      if (
+        sessionData
+          .session
+          .user
+          .id !==
+        account.userId
+      ) {
+        throw new Error(
+          'Saved session belongs to a different account.',
+        );
       }
 
       const {
@@ -516,12 +440,16 @@ export default function AppHeader({
             'profiles',
           )
           .select(`
+            user_id,
             role,
             must_change_password
           `)
           .eq(
             'user_id',
-            account.userId,
+            sessionData
+              .session
+              .user
+              .id,
           )
           .single();
 
@@ -529,11 +457,30 @@ export default function AppHeader({
         profileError ||
         !newProfile
       ) {
+        console.log(
+          'SWITCH PROFILE ERROR:',
+          profileError,
+        );
+
         setAccountError(
-          'Could not switch account.',
+          'Could not load this account.',
         );
 
         return;
+      }
+
+      const newRole =
+        newProfile.role as
+          UserRole;
+
+      if (
+        newRole !== 'admin' &&
+        newRole !== 'teacher' &&
+        newRole !== 'student'
+      ) {
+        throw new Error(
+          'Invalid account role.',
+        );
       }
 
       closeMenu();
@@ -551,8 +498,7 @@ export default function AppHeader({
 
       router.replace(
         getRoleRoute(
-          newProfile.role as
-            UserRole,
+          newRole,
         ),
       );
     } catch (
@@ -564,7 +510,9 @@ export default function AppHeader({
       );
 
       setAccountError(
-        'Could not switch account.',
+        error instanceof Error
+          ? error.message
+          : 'Could not switch account.',
       );
     } finally {
       setSwitchingId(
@@ -573,13 +521,10 @@ export default function AppHeader({
     }
   }
 
-  /* =====================================================
-   * LOGOUT
-   * =================================================== */
-
   async function logout() {
     if (
       loggingOut ||
+      switchingId ||
       !profile
     ) {
       return;
@@ -600,64 +545,15 @@ export default function AppHeader({
       const remaining =
         await getSavedAccounts();
 
-      await supabase.auth
-        .signOut();
-
-      closeMenu();
-
-      /*
-       * No accounts left.
-       */
-
       if (
         remaining.length ===
         0
       ) {
-        router.replace(
-          '/' as Href,
-        );
-
-        return;
-      }
-
-      /*
-       * Automatically switch
-       * to the next saved account.
-       */
-
-      const next =
-        remaining[0];
-
-      const session =
-        await getSavedSession(
-          next.userId,
-        );
-
-      if (
-        !session
-      ) {
-        router.replace(
-          '/' as Href,
-        );
-
-        return;
-      }
-
-      const {
-        error,
-      } =
         await supabase.auth
-          .setSession({
-            access_token:
-              session.accessToken,
+          .signOut();
 
-            refresh_token:
-              session.refreshToken,
-          });
+        closeMenu();
 
-      if (
-        error
-      ) {
         router.replace(
           '/' as Href,
         );
@@ -665,11 +561,83 @@ export default function AppHeader({
         return;
       }
 
-      router.replace(
-        getRoleRoute(
-          next.role,
-        ),
-      );
+      let switched =
+        false;
+
+      for (
+        const next of
+        remaining
+      ) {
+        const session =
+          await getSavedSession(
+            next.userId,
+          );
+
+        if (
+          !session
+        ) {
+          continue;
+        }
+
+        const {
+          data:
+            sessionData,
+
+          error:
+            sessionError,
+        } =
+          await supabase.auth
+            .setSession({
+              access_token:
+                session.accessToken,
+
+              refresh_token:
+                session.refreshToken,
+            });
+
+        if (
+          sessionError ||
+          !sessionData.session
+        ) {
+          continue;
+        }
+
+        if (
+          sessionData
+            .session
+            .user
+            .id !==
+          next.userId
+        ) {
+          continue;
+        }
+
+        closeMenu();
+
+        router.replace(
+          getRoleRoute(
+            next.role,
+          ),
+        );
+
+        switched =
+          true;
+
+        break;
+      }
+
+      if (
+        !switched
+      ) {
+        await supabase.auth
+          .signOut();
+
+        closeMenu();
+
+        router.replace(
+          '/' as Href,
+        );
+      }
     } catch (
       error
     ) {
@@ -688,20 +656,12 @@ export default function AppHeader({
     }
   }
 
-  /* =====================================================
-   * OTHER ACCOUNTS
-   * =================================================== */
-
   const otherAccounts =
     accounts.filter(
       account =>
         account.userId !==
         profile?.user_id,
     );
-
-  /* =====================================================
-   * UI
-   * =================================================== */
 
   return (
     <>
@@ -714,18 +674,13 @@ export default function AppHeader({
         }
       />
 
-      {/* ================================================= */}
-      {/* HEADER */}
-      {/* ================================================= */}
-
       <View
         style={[
           styles.header,
 
           {
             paddingTop:
-              insets.top +
-              6,
+              insets.top + 6,
           },
         ]}
       >
@@ -758,72 +713,78 @@ export default function AppHeader({
           </Text>
         </View>
 
-        {/* ACCOUNT BUTTON */}
-
-        <Pressable
-          onPress={() =>
-            setMenuOpen(
-              true,
-            )
+        <View
+          style={
+            styles.headerRight
           }
-          style={({
-            pressed,
-          }) => [
-            styles.accountButton,
-
-            pressed &&
-              styles.pressed,
-          ]}
         >
-          <View
-            style={
-              styles.avatar
-            }
-          >
-            {loading ? (
-              <ActivityIndicator
-                size="small"
-                color={
-                  colors.primary
-                }
-              />
-            ) : profile
-                ?.avatar_url ? (
-              <Image
-                source={{
-                  uri:
-                    profile.avatar_url,
-                }}
-                style={
-                  styles.avatarImage
-                }
-              />
-            ) : (
-              <Text
-                style={
-                  styles.avatarText
-                }
-              >
-                {
-                  initial
-                }
-              </Text>
-            )}
-          </View>
-
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            color={
-              colors.textMuted
+          <NotificationBell
+            role={
+              role
             }
           />
-        </Pressable>
-      </View>
 
-      {/* ================================================= */}
-      {/* ACCOUNT MENU */}
-      {/* ================================================= */}
+          <Pressable
+            onPress={() =>
+              setMenuOpen(
+                true,
+              )
+            }
+            style={({
+              pressed,
+            }) => [
+              styles.accountButton,
+
+              pressed &&
+                styles.pressed,
+            ]}
+          >
+            <View
+              style={
+                styles.avatar
+              }
+            >
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={
+                    colors.primary
+                  }
+                />
+              ) : profile
+                  ?.avatar_url ? (
+                <Image
+                  source={{
+                    uri:
+                      profile.avatar_url,
+                  }}
+                  style={
+                    styles.avatarImage
+                  }
+                />
+              ) : (
+                <Text
+                  style={
+                    styles.avatarText
+                  }
+                >
+                  {
+                    initial
+                  }
+                </Text>
+              )}
+            </View>
+
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={
+                colors.textMuted
+              }
+            />
+          </Pressable>
+        </View>
+      </View>
 
       <Modal
         visible={
@@ -861,10 +822,6 @@ export default function AppHeader({
                 event.stopPropagation()
             }
           >
-            {/* ============================================= */}
-            {/* CURRENT ACCOUNT - FIXED */}
-            {/* ============================================= */}
-
             <View
               style={
                 styles.currentAccount
@@ -927,10 +884,6 @@ export default function AppHeader({
                 }
               />
             </View>
-
-            {/* ============================================= */}
-            {/* OTHER ACCOUNTS - ONLY THIS AREA SCROLLS */}
-            {/* ============================================= */}
 
             {otherAccounts.length >
             0 ? (
@@ -1045,10 +998,6 @@ export default function AppHeader({
               </>
             ) : null}
 
-            {/* ============================================= */}
-            {/* ADD ACCOUNT */}
-            {/* ============================================= */}
-
             <Pressable
               onPress={
                 addAccount
@@ -1096,10 +1045,6 @@ export default function AppHeader({
                 }
               </Text>
             ) : null}
-
-            {/* ============================================= */}
-            {/* ACTIONS */}
-            {/* ============================================= */}
 
             <Divider
               styles={
@@ -1165,18 +1110,10 @@ export default function AppHeader({
   );
 }
 
-/* =========================================================
- * SHARED STYLE TYPE
- * ======================================================= */
-
 type SharedStyles =
   ReturnType<
     typeof createStyles
   >;
-
-/* =========================================================
- * ACCOUNT AVATAR
- * ======================================================= */
 
 function AccountAvatar({
   name,
@@ -1184,8 +1121,7 @@ function AccountAvatar({
   colors,
   styles,
 }: {
-  name:
-    string;
+  name: string;
 
   avatarUrl:
     string | null;
@@ -1234,10 +1170,6 @@ function AccountAvatar({
   );
 }
 
-/* =========================================================
- * DIVIDER
- * ======================================================= */
-
 function Divider({
   styles,
 }: {
@@ -1253,10 +1185,6 @@ function Divider({
   );
 }
 
-/* =========================================================
- * MENU ITEM
- * ======================================================= */
-
 function MenuItem({
   icon,
   title,
@@ -1271,8 +1199,7 @@ function MenuItem({
     | 'settings-outline'
     | 'log-out-outline';
 
-  title:
-    string;
+  title: string;
 
   onPress:
     () => void;
@@ -1365,19 +1292,11 @@ function MenuItem({
   );
 }
 
-/* =========================================================
- * STYLES
- * ======================================================= */
-
 function createStyles(
   colors:
     AppThemeColors,
 ) {
   return StyleSheet.create({
-    /* =====================================================
-     * HEADER
-     * =================================================== */
-
     header: {
       width:
         '100%',
@@ -1415,7 +1334,7 @@ function createStyles(
         0,
 
       paddingRight:
-        12,
+        10,
     },
 
     pageTitle: {
@@ -1446,9 +1365,16 @@ function createStyles(
         colors.textMuted,
     },
 
-    /* =====================================================
-     * HEADER ACCOUNT
-     * =================================================== */
+    headerRight: {
+      flexDirection:
+        'row',
+
+      alignItems:
+        'center',
+
+      gap:
+        9,
+    },
 
     accountButton: {
       flexDirection:
@@ -1458,10 +1384,10 @@ function createStyles(
         'center',
 
       gap:
-        5,
+        4,
 
       padding:
-        4,
+        3,
 
       borderRadius:
         30,
@@ -1525,10 +1451,6 @@ function createStyles(
         colors.primary,
     },
 
-    /* =====================================================
-     * OVERLAY
-     * =================================================== */
-
     overlay: {
       flex:
         1,
@@ -1536,10 +1458,6 @@ function createStyles(
       backgroundColor:
         'rgba(0,0,0,0.34)',
     },
-
-    /* =====================================================
-     * MENU
-     * =================================================== */
 
     menuCard: {
       position:
@@ -1593,10 +1511,6 @@ function createStyles(
         12,
     },
 
-    /* =====================================================
-     * CURRENT ACCOUNT
-     * =================================================== */
-
     currentAccount: {
       minHeight:
         58,
@@ -1613,10 +1527,6 @@ function createStyles(
       borderRadius:
         14,
     },
-
-    /* =====================================================
-     * SAVED ACCOUNTS
-     * =================================================== */
 
     accountsViewport: {
       maxHeight:
@@ -1717,15 +1627,14 @@ function createStyles(
         2,
 
       fontSize:
-        11.5,
+        11,
+
+      fontWeight:
+        '500',
 
       color:
         colors.textMuted,
     },
-
-    /* =====================================================
-     * ADD ACCOUNT
-     * =================================================== */
 
     addAccount: {
       minHeight:
@@ -1793,11 +1702,10 @@ function createStyles(
 
       fontSize:
         12,
-    },
 
-    /* =====================================================
-     * DIVIDER
-     * =================================================== */
+      fontWeight:
+        '600',
+    },
 
     divider: {
       height:
@@ -1809,10 +1717,6 @@ function createStyles(
       backgroundColor:
         colors.border,
     },
-
-    /* =====================================================
-     * MENU ITEM
-     * =================================================== */
 
     menuItem: {
       height:
