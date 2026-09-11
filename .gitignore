@@ -42,3 +42,10 @@ example
 # generated native folders
 /ios
 /android
+
+# Local scheduler runtimes, dependencies, and test output
+.cache/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc

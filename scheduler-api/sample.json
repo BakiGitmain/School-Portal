@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "settings": {
+    "active_days": [1, 2, 3, 4, 5],
+    "start_minute": 480,
+    "periods_per_day": 7,
+    "period_minutes": 45,
+    "breaks": [
+      {"kind": "rest", "label": "Rest", "after_period": 3, "duration_minutes": 20},
+      {"kind": "lunch", "label": "Lunch", "after_period": 5, "duration_minutes": 45}
+    ],
+    "no_assignment_back_to_back": true,
+    "max_teacher_consecutive": 3
+  },
+  "requirements": [
+    {"id": "daniel-10a-physics", "teacher_user_id": "daniel", "teacher_name": "Daniel", "class_id": "10a", "class_name": "10A", "subject": "Physics", "periods_per_week": 4, "max_per_day": 1, "allow_back_to_back": false, "enabled": true},
+    {"id": "hana-10a-physics", "teacher_user_id": "hana", "teacher_name": "Hana", "class_id": "10a", "class_name": "10A", "subject": "Physics", "periods_per_week": 3, "max_per_day": 1, "allow_back_to_back": false, "enabled": true},
+    {"id": "daniel-9a-physics", "teacher_user_id": "daniel", "teacher_name": "Daniel", "class_id": "9a", "class_name": "9A", "subject": "Physics", "periods_per_week": 4, "max_per_day": 1, "allow_back_to_back": false, "enabled": true}
+  ],
+  "rules": {
+    "schema_version": 1,
+    "hard_constraints": [
+      {"id": "daniel-monday-p1", "description": "Daniel cannot teach Monday period 1", "kind": "unavailable", "scope": "teacher", "teacher_user_id": "daniel", "days": [1], "periods": [1]}
+    ],
+    "soft_preferences": [
+      {"id": "morning-physics", "description": "Prefer Physics before noon", "kind": "prefer_slots", "scope": "class_subject", "subject": "Physics", "end_minute": 720, "weight": 10},
+      {"id": "light-friday", "description": "Prefer a lighter Friday", "kind": "lighter_day", "scope": "class", "days": [5], "weight": 5}
+    ],
+    "clarification_questions": []
+  },
+  "seed": 42,
+  "time_limit_seconds": 15
+}
