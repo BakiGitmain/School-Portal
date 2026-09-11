@@ -1,0 +1,16 @@
+# Local environments and secrets must never be uploaded by the Vercel CLI.
+.venv/
+.cache/
+__pycache__/
+.pytest_cache/
+.env*
+*.pyc
+
+# The deployed service needs only production code and requirements.txt.
+test_*.py
+sample.json
+requirements-dev*
+*.in
+*.md
+Dockerfile
+.dockerignore

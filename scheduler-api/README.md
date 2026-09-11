@@ -70,9 +70,11 @@ Unknown/ambiguous AI references require clarification; generation is blocked whi
 
 ## Hosting manually
 
+**Selected host: Vercel.** See [VERCEL.md](VERCEL.md) for the scheduler-only project settings and the manual hosted test checkpoint. The existing `main.py`, routes, secret name and scheduling logic work with Vercel's native FastAPI preset; use `scheduler-api` as a separate project's Root Directory. The Docker instructions below remain a container-host fallback.
+
 Deploy this directory on a Python/container host you control. The provided Dockerfile runs a non-root user and one Uvicorn worker. Configure HTTPS at your host/reverse proxy, the `SCHEDULER_API_KEY` secret, a 1 MB proxy body limit, request timeout and rate limits. Do not expose the shared key in browser/mobile code. Configure the Edge Function's `SCHEDULER_URL` to the HTTPS origin (no path). Restrict network ingress to your backend infrastructure where your host supports it.
 
-The in-process concurrency bound is per worker/replica. Start with one worker; a larger deployment needs ingress-wide rate/concurrency limits. Apply a rate limit to timetable AI invocations before production rollout, along with OpenAI project spending limits. No hosting account was selected or deployed by Codex.
+The in-process concurrency bound is per worker/replica. Start with one worker; a larger deployment needs ingress-wide rate/concurrency limits. Apply a rate limit to timetable AI invocations before production rollout, along with OpenAI project spending limits. Hosting deployment is manual; Codex has not deployed this service.
 
 ## References
 
