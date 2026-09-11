@@ -116,6 +116,28 @@ export default function AdminMoreScreen() {
             styles
           }
         />
+        <MenuItem
+  icon="sparkles-outline"
+  title="Smart Schedule"
+  description="Generate, review and publish teacher and class timetables"
+  onPress={() =>
+    router.push(
+      '/admin/more/timetable' as Href,
+    )
+  }
+  colors={
+    colors
+  }
+  styles={
+    styles
+  }
+/>
+
+<View
+  style={
+    styles.divider
+  }
+/>
       </View>
     </ScrollView>
   );
@@ -129,9 +151,10 @@ function MenuItem({
   colors,
   styles,
 }: {
-  icon:
-    | 'calendar-outline'
-    | 'megaphone-outline';
+icon:
+  | 'sparkles-outline'
+  | 'calendar-outline'
+  | 'megaphone-outline';
 
   title:
     string;

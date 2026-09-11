@@ -1,5 +1,5 @@
 import React from 'react';
-
+import TimetableBuilderScreen from '../../../features/admin/screens/TimetableBuilderScreen';
 import {
   Pressable,
   StyleSheet,
@@ -74,7 +74,18 @@ export default function AdminMoreDetail() {
       />
     );
   }
+/* =====================================================
+ * SMART TIMETABLE
+ * =================================================== */
 
+if (
+  id ===
+  'timetable'
+) {
+  return (
+    <TimetableBuilderScreen />
+  );
+}
   /* =====================================================
    * UNKNOWN PAGE
    * =================================================== */
