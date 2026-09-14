@@ -296,14 +296,7 @@ export default function RootPage() {
       } =
         supabase.auth
           .onAuthStateChange(
-            (
-              event,
-            ) => {
-              console.log(
-                'ROOT AUTH EVENT:',
-                event,
-              );
-
+            () => {
               void loadCurrentAccount();
             },
           );

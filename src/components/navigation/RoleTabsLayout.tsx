@@ -135,7 +135,7 @@ export function RoleTabsLayout({
         />
 
         <Tabs.Screen
-          name="student/[id]"
+          name="student"
           options={{
             href:
               null,

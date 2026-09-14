@@ -16,9 +16,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   StatusBar,
@@ -35,6 +33,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import NotificationBell from './NotificationBell';
+import { disableCurrentPushToken } from '../notifications/PushNotificationManager';
 
 import {
   supabase,
@@ -378,6 +377,11 @@ export default function AppHeader({
         return;
       }
 
+      if (!await disableCurrentPushToken()) {
+        setAccountError('Could not safely switch accounts. Check your connection and try again.');
+        return;
+      }
+
       const {
         data:
           sessionData,
@@ -537,6 +541,11 @@ export default function AppHeader({
 
       const currentId =
         profile.user_id;
+
+      if (!await disableCurrentPushToken()) {
+        setAccountError('Could not safely sign out. Check your connection and try again.');
+        return;
+      }
 
       await removeSavedAccount(
         currentId,

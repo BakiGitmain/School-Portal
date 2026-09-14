@@ -128,10 +128,10 @@ export const ROLE_NAVIGATION: Record<
       activeIcon: 'calendar',
     },
     {
-      route: 'announcements',
-      label: 'News',
-      icon: 'megaphone-outline',
-      activeIcon: 'megaphone',
+      route: 'more',
+      label: 'More',
+      icon: 'grid-outline',
+      activeIcon: 'grid',
     },
   ],
 };

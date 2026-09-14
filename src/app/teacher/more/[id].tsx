@@ -7,9 +7,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   useLocalSearchParams,
@@ -19,6 +17,8 @@ import {
 import SchoolCalendarViewerScreen from '../../../features/shared/screens/SchoolCalendarViewerScreen';
 
 import NotificationComposerScreen from '../../../features/shared/screens/NotificationComposerScreen';
+
+import PublishedScheduleScreen from '../../../features/timetable/PublishedScheduleScreen';
 
 import HomeroomBehaviorScreen from '../../../features/teacher/screens/HomeroomBehaviorScreen';
 
@@ -48,6 +48,15 @@ export default function TeacherMoreDetail() {
     )
       ? params.id[0]
       : params.id;
+
+  if (
+    id ===
+    'schedule'
+  ) {
+    return (
+      <PublishedScheduleScreen role="teacher" />
+    );
+  }
 
   if (
     id ===

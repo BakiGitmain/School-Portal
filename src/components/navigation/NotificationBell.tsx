@@ -1,35 +1,20 @@
 import React, {
-  useCallback,
-  useEffect,
   useMemo,
-  useState,
 } from 'react';
 
 import {
-  AppState,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   type Href,
-  usePathname,
   useRouter,
 } from 'expo-router';
-
-import {
-  supabase,
-} from '../../lib/supabase';
-
-import {
-  useCurrentProfile,
-} from '../../hooks/useCurrentProfile';
 
 import {
   useAppSettings,
@@ -39,6 +24,7 @@ import {
 import type {
   UserRole,
 } from '../../constants/roleNavigation';
+import { useNotificationCenter } from '../../context/NotificationCenterContext';
 
 type Props = {
   role: UserRole;
@@ -49,14 +35,6 @@ export default function NotificationBell({
 }: Props) {
   const router =
     useRouter();
-
-  const pathname =
-    usePathname();
-
-  const {
-    profile,
-  } =
-    useCurrentProfile();
 
   const {
     colors,
@@ -74,97 +52,7 @@ export default function NotificationBell({
       ],
     );
 
-  const [
-    unreadCount,
-    setUnreadCount,
-  ] =
-    useState(0);
-
-  const loadCount =
-    useCallback(
-      async () => {
-        if (
-          !profile?.user_id
-        ) {
-          setUnreadCount(
-            0,
-          );
-
-          return;
-        }
-
-        const {
-          data,
-          error,
-        } =
-          await supabase.rpc(
-            'get_my_notification_unread_count',
-          );
-
-        if (
-          error
-        ) {
-          console.log(
-            'NOTIFICATION COUNT ERROR:',
-            error,
-          );
-
-          return;
-        }
-
-        setUnreadCount(
-          Math.max(
-            0,
-            Number(
-              data ??
-                0,
-            ),
-          ),
-        );
-      },
-      [
-        profile?.user_id,
-      ],
-    );
-
-  useEffect(
-    () => {
-      void loadCount();
-
-      const interval =
-        setInterval(
-          () => {
-            void loadCount();
-          },
-          20000,
-        );
-
-      const subscription =
-        AppState.addEventListener(
-          'change',
-          state => {
-            if (
-              state ===
-              'active'
-            ) {
-              void loadCount();
-            }
-          },
-        );
-
-      return () => {
-        clearInterval(
-          interval,
-        );
-
-        subscription.remove();
-      };
-    },
-    [
-      loadCount,
-      pathname,
-    ],
-  );
+  const { unreadCount } = useNotificationCenter();
 
   function openNotifications() {
     router.push(

@@ -10,9 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   type Href,
@@ -35,6 +33,7 @@ type Props = {
 
 type MenuIcon =
   | 'calendar-outline'
+  | 'time-outline'
   | 'happy-outline'
   | 'analytics-outline'
   | 'megaphone-outline';
@@ -103,6 +102,17 @@ export default function MoreMenuScreen({
           styles.card
         }
       >
+        <MenuItem
+          icon="time-outline"
+          title={role === 'teacher' ? 'Teaching Schedule' : 'Class Schedule'}
+          description={role === 'teacher' ? 'View your published weekly lessons' : 'View your class published timetable'}
+          onPress={() => openPage('schedule')}
+          colors={colors}
+          styles={styles}
+        />
+
+        <View style={styles.divider} />
+
         <MenuItem
           icon="calendar-outline"
           title="School Calendar"

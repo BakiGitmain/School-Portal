@@ -10,9 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   type Href,
@@ -116,28 +114,20 @@ export default function AdminMoreScreen() {
             styles
           }
         />
-        <MenuItem
-  icon="sparkles-outline"
-  title="Smart Schedule"
-  description="Generate, review and publish teacher and class timetables"
-  onPress={() =>
-    router.push(
-      '/admin/more/timetable' as Href,
-    )
-  }
-  colors={
-    colors
-  }
-  styles={
-    styles
-  }
-/>
+        <View style={styles.divider} />
 
-<View
-  style={
-    styles.divider
-  }
-/>
+        <MenuItem
+          icon="calendar-outline"
+          title="Timetable"
+          description="Build, save and publish the school schedule"
+          onPress={() =>
+            router.push(
+              '/admin/more/timetable' as Href,
+            )
+          }
+          colors={colors}
+          styles={styles}
+        />
       </View>
     </ScrollView>
   );
@@ -152,7 +142,6 @@ function MenuItem({
   styles,
 }: {
 icon:
-  | 'sparkles-outline'
   | 'calendar-outline'
   | 'megaphone-outline';
 

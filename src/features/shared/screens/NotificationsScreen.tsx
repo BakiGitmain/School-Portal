@@ -1,5 +1,4 @@
 import React, {
-  useCallback,
   useMemo,
   useState,
 } from 'react';
@@ -14,19 +13,11 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
-  type Href,
-  useFocusEffect,
   useRouter,
 } from 'expo-router';
-
-import {
-  supabase,
-} from '../../../lib/supabase';
 
 import {
   useAppSettings,
@@ -36,43 +27,12 @@ import {
 import type {
   UserRole,
 } from '../../../constants/roleNavigation';
-
-type NotificationKind =
-  | 'announcement'
-  | 'calendar'
-  | 'attendance'
-  | 'behavior'
-  | 'test'
-  | 'meeting'
-  | 'info';
-
-type ActionType =
-  | 'calendar'
-  | 'attendance'
-  | 'behavior'
-  | null;
-
-type NotificationRow = {
-  id: string;
-
-  kind:
-    NotificationKind;
-
-  title:
-    string;
-
-  message:
-    string;
-
-  action_type:
-    ActionType;
-
-  created_at:
-    string;
-
-  is_read:
-    boolean;
-};
+import { getNotificationRoute } from '../../../lib/notificationRoutes';
+import {
+  useNotificationCenter,
+  type NotificationKind,
+  type NotificationRow,
+} from '../../../context/NotificationCenterContext';
 
 type Props = {
   role:
@@ -101,19 +61,15 @@ export default function NotificationsScreen({
       ],
     );
 
-  const [
+  const {
     notifications,
-    setNotifications,
-  ] =
-    useState<
-      NotificationRow[]
-    >([]);
-
-  const [
+    unreadCount,
     loading,
-    setLoading,
-  ] =
-    useState(true);
+    errorMessage,
+    refresh,
+    markRead,
+    markAllRead: markAllReadInCenter,
+  } = useNotificationCenter();
 
   const [
     refreshing,
@@ -127,122 +83,12 @@ export default function NotificationsScreen({
   ] =
     useState(false);
 
-  const loadNotifications =
-    useCallback(
-      async (
-        refresh = false,
-      ) => {
-        try {
-          if (
-            refresh
-          ) {
-            setRefreshing(
-              true,
-            );
-          } else {
-            setLoading(
-              true,
-            );
-          }
-
-          const {
-            data,
-            error,
-          } =
-            await supabase.rpc(
-              'get_my_notifications',
-              {
-                p_limit:
-                  60,
-              },
-            );
-
-          if (
-            error
-          ) {
-            throw error;
-          }
-
-          setNotifications(
-            (
-              data ??
-              []
-            ) as
-              NotificationRow[],
-          );
-        } catch (
-          error
-        ) {
-          console.log(
-            'LOAD NOTIFICATIONS ERROR:',
-            error,
-          );
-        } finally {
-          setLoading(
-            false,
-          );
-
-          setRefreshing(
-            false,
-          );
-        }
-      },
-      [],
-    );
-
-  useFocusEffect(
-    useCallback(
-      () => {
-        void loadNotifications();
-      },
-      [
-        loadNotifications,
-      ],
-    ),
-  );
-
-  const unreadCount =
-    notifications.filter(
-      item =>
-        !item.is_read,
-    ).length;
-
-  async function markRead(
-    id:
-      string,
-  ) {
-    setNotifications(
-      current =>
-        current.map(
-          item =>
-            item.id === id
-              ? {
-                  ...item,
-                  is_read:
-                    true,
-                }
-              : item,
-        ),
-    );
-
-    const {
-      error,
-    } =
-      await supabase.rpc(
-        'mark_notification_read',
-        {
-          p_notification_id:
-            id,
-        },
-      );
-
-    if (
-      error
-    ) {
-      console.log(
-        'MARK NOTIFICATION READ ERROR:',
-        error,
-      );
+  async function loadNotifications() {
+    setRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -260,29 +106,7 @@ export default function NotificationsScreen({
         true,
       );
 
-      const {
-        error,
-      } =
-        await supabase.rpc(
-          'mark_all_notifications_read',
-        );
-
-      if (
-        error
-      ) {
-        throw error;
-      }
-
-      setNotifications(
-        current =>
-          current.map(
-            item => ({
-              ...item,
-              is_read:
-                true,
-            }),
-          ),
-      );
+      await markAllReadInCenter();
     } catch (
       error
     ) {
@@ -309,43 +133,7 @@ export default function NotificationsScreen({
       );
     }
 
-    const action =
-      notification.action_type;
-
-    if (
-      action ===
-      'calendar'
-    ) {
-      router.push(
-        `/${role}/more/calendar` as Href,
-      );
-
-      return;
-    }
-
-    if (
-      action ===
-        'attendance' &&
-      role ===
-        'student'
-    ) {
-      router.push(
-        '/student/attendance' as Href,
-      );
-
-      return;
-    }
-
-    if (
-      action ===
-        'behavior' &&
-      role ===
-        'student'
-    ) {
-      router.push(
-        '/student/more/behavior' as Href,
-      );
-    }
+    router.push(getNotificationRoute(role, notification.action_type));
   }
 
   return (
@@ -365,9 +153,7 @@ export default function NotificationsScreen({
             refreshing
           }
           onRefresh={() =>
-            void loadNotifications(
-              true,
-            )
+            void loadNotifications()
           }
           tintColor={
             colors.primary
@@ -377,7 +163,7 @@ export default function NotificationsScreen({
     >
       <Pressable
         onPress={() =>
-          router.back()
+          router.replace(`/${role}`)
         }
         style={({
           pressed,
@@ -493,6 +279,15 @@ export default function NotificationsScreen({
           >
             Loading notifications...
           </Text>
+        </View>
+      ) : errorMessage ? (
+        <View style={styles.emptyCard}>
+          <Ionicons name="cloud-offline-outline" size={30} color={colors.danger} />
+          <Text style={styles.emptyTitle}>Could not load notifications</Text>
+          <Text style={styles.emptyDescription}>{errorMessage}</Text>
+          <Pressable style={styles.markAllButton} onPress={() => void refresh()}>
+            <Text style={styles.markAllText}>Try again</Text>
+          </Pressable>
         </View>
       ) : notifications.length ===
         0 ? (

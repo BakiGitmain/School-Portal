@@ -1,13 +1,7 @@
-import {
-  PlaceholderScreen,
-} from '../../components/common/PlaceholderScreen';
+import RoleDashboardScreen from '../../features/dashboard/RoleDashboardScreen';
 
 export default function TeacherHome() {
   return (
-    <PlaceholderScreen
-      title="Teacher Dashboard"
-      description="Your classes, students and recent school activity."
-      icon="home-outline"
-    />
+    <RoleDashboardScreen role="teacher" />
   );
 }

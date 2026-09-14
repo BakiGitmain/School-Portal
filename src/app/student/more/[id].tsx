@@ -7,24 +7,24 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
 
-import SchoolCalendarScreen from '../../../features/admin/screens/SchoolCalendarScreen';
+import SchoolCalendarViewerScreen from '../../../features/shared/screens/SchoolCalendarViewerScreen';
 
-import NotificationComposerScreen from '../../../features/shared/screens/NotificationComposerScreen';
+import StudentBehaviorScreen from '../../../features/student/screens/StudentBehaviorScreen';
+
+import PublishedScheduleScreen from '../../../features/timetable/PublishedScheduleScreen';
 
 import {
   useAppSettings,
 } from '../../../context/AppSettingsContext';
 
-export default function AdminMoreDetail() {
+export default function StudentMoreDetail() {
   const router =
     useRouter();
 
@@ -49,21 +49,28 @@ export default function AdminMoreDetail() {
 
   if (
     id ===
-    'calendar'
+    'schedule'
   ) {
     return (
-      <SchoolCalendarScreen />
+      <PublishedScheduleScreen role="student" />
     );
   }
 
   if (
     id ===
-    'announcements'
+    'calendar'
   ) {
     return (
-      <NotificationComposerScreen
-        role="admin"
-      />
+      <SchoolCalendarViewerScreen />
+    );
+  }
+
+  if (
+    id ===
+    'behavior'
+  ) {
+    return (
+      <StudentBehaviorScreen />
     );
   }
 

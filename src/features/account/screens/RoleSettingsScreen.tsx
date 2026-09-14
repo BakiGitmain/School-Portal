@@ -3,6 +3,7 @@ import React, {
 } from 'react';
 
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,7 +14,7 @@ import {
 
 import { StatusBar } from 'expo-status-bar';
 
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   SafeAreaView,
@@ -26,6 +27,11 @@ import {
   type AppearanceMode,
   type AppThemeColors,
 } from '../../../context/AppSettingsContext';
+import {
+  disableCurrentPushToken,
+  enableCurrentPushNotifications,
+  openNotificationSettings,
+} from '../../../components/notifications/PushNotificationManager';
 
 type Role =
   | 'admin'
@@ -79,6 +85,44 @@ export default function RoleSettingsScreen({
     Constants.expoConfig
       ?.version ??
     '1.0.0';
+
+  async function changeNotifications(value: boolean) {
+    if (!value) {
+      const disabled = await disableCurrentPushToken();
+      if (!disabled) {
+        Alert.alert('Notifications', "We couldn't update notification settings. Check your connection and try again.");
+        return;
+      }
+      setNotificationsEnabled(false);
+      return;
+    }
+
+    const status = await enableCurrentPushNotifications();
+    if (status === 'registered') {
+      setNotificationsEnabled(true);
+      return;
+    }
+
+    setNotificationsEnabled(false);
+    if (status === 'denied') {
+      Alert.alert(
+        'Allow notifications',
+        'Please allow notifications in Android Settings.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => void openNotificationSettings() },
+        ],
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Notifications unavailable',
+      status === 'unavailable'
+        ? 'Remote notifications require a physical device and an installed preview or production build.'
+        : "We couldn't register this device for notifications.",
+    );
+  }
 
   return (
     <SafeAreaView
@@ -234,7 +278,7 @@ export default function RoleSettingsScreen({
               notificationsEnabled
             }
             onValueChange={
-              setNotificationsEnabled
+              value => void changeNotifications(value)
             }
             colors={
               colors
